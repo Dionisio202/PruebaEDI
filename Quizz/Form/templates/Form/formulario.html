@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EDI - Evaluación del Desarrollo Infantil</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    * { font-family: 'Inter', sans-serif; }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    }
+    
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .btn-yes, .btn-no {
+      transition: all 0.2s ease;
+    }
+    
+    .btn-yes.active {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      transform: scale(1.05);
+    }
+    
+    .btn-no.active {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      transform: scale(1.05);
+    }
+    
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+    
+    .critical-badge {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .5; }
+    }
+    
+    .toast {
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Header -->
+  <header class="gradient-bg text-white shadow-lg">
+    <div class="container mx-auto px-4 py-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+            <i class="fas fa-child text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold">Prueba EDI</h1>
+            <p class="text-white/80 text-sm">Evaluación del Desarrollo Infantil</p>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center space-x-3 bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm">
+          <i class="fas fa-hospital text-sm"></i>
+          <span class="text-sm font-medium">Panel Médico</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Panel Izquierdo: Datos del Paciente -->
+      <div class="lg:col-span-2 space-y-6">
+        
+        <!-- Card: Datos del Paciente -->
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden card-hover">
+          <div class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <i class="fas fa-user-circle text-white text-2xl"></i>
+              <h2 class="text-white font-semibold text-lg">Datos del Paciente</h2>
+            </div>
+            <span class="bg-white/20 text-white text-xs px-3 py-1 rounded-full">Obligatorio</span>
+          </div>
+          
+          <div class="p-6 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-user text-blue-500 mr-2"></i>Nombre completo *
+                </label>
+                <input type="text" id="childName" required
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  placeholder="Ej: Juan Carlos Pérez López">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-id-card text-blue-500 mr-2"></i>Documento de identidad
+                </label>
+                <input type="text" id="documentId"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  placeholder="Cédula o historia clínica">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-venus-mars text-blue-500 mr-2"></i>Sexo
+                </label>
+                <select id="sex" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                  <option value="">Seleccione...</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Femenino</option>
+                  <option value="O">Otro</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-calendar text-blue-500 mr-2"></i>Fecha de nacimiento
+                </label>
+                <input type="date" id="dob"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-phone text-blue-500 mr-2"></i>Teléfono
+                </label>
+                <input type="tel" id="phone"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                  placeholder="09xxxxxxxx">
+              </div>
+            </div>
+
+            <!-- Prematuridad -->
+            <div class="border-t pt-4">
+              <div class="flex items-center space-x-4 mb-4">
+                <input type="checkbox" id="isPremature" class="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                <label for="isPremature" class="text-sm font-medium text-gray-700">
+                  <i class="fas fa-baby text-orange-500 mr-2"></i>¿El paciente es prematuro?
+                </label>
+              </div>
+              
+              <div id="prematureFields" class="hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-hourglass-half text-orange-500 mr-2"></i>Semanas de gestación al nacer
+                </label>
+                <input type="number" id="gestationalWeeks" min="20" max="42"
+                  class="w-full md:w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
+                  placeholder="Ej: 34">
+              </div>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div class="flex items-start space-x-3">
+                <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                <div class="text-sm text-blue-800">
+                  <p class="font-medium mb-1">Edad corregida para prematuros</p>
+                  <p class="text-blue-700">Si el niño es prematuro, el sistema calculará automáticamente la edad corregida para determinar el grupo EDI apropiado.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Selección de Grupo -->
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden card-hover">
+          <div class="bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-4">
+            <div class="flex items-center space-x-3">
+              <i class="fas fa-layer-group text-white text-xl"></i>
+              <h2 class="text-white font-semibold text-lg">Grupo de Edad EDI</h2>
+            </div>
+          </div>
+          
+          <div class="p-6">
+            <label class="block text-sm font-medium text-gray-700 mb-3">
+              Seleccione el grupo de edad correspondiente *
+            </label>
+            <select id="ageGroup" required
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-lg font-medium">
+              <option value="">-- Seleccione un grupo --</option>
+              <option value="01">Grupo 01 (1 mes - 1m 29d)</option>
+              <option value="02">Grupo 02 (2 meses - 2m 29d)</option>
+              <option value="03">Grupo 03 (3 meses - 3m 29d)</option>
+              <option value="04">Grupo 04 (4 meses - 4m 29d)</option>
+              <option value="05-06">Grupo 05-06 (5-6 meses)</option>
+              <option value="07-09">Grupo 07-09 (7-9 meses)</option>
+              <option value="10-12">Grupo 10-12 (10-12 meses)</option>
+              <option value="13-15">Grupo 13-15 (13-15 meses)</option>
+              <option value="16-18">Grupo 16-18 (16-18 meses)</option>
+              <option value="19-24">Grupo 19-24 (19-24 meses)</option>
+              <option value="25-30">Grupo 25-30 (25-30 meses)</option>
+              <option value="31-36">Grupo 31-36 (31-36 meses)</option>
+              <option value="37-48">Grupo 37-48 (37-48 meses)</option>
+              <option value="49-59">Grupo 49-59 (49-59 meses)</option>
+              <option value="60-71">Grupo 60-71 (60-71 meses)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Card: Cuestionario -->
+        <div id="questionsContainer" class="space-y-4"></div>
+
+      </div>
+
+      <!-- Panel Derecho: Progreso y Acciones -->
+      <div class="space-y-6">
+        
+        <!-- Card: Progreso -->
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden sticky top-6">
+          <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
+            <div class="flex items-center space-x-3">
+              <i class="fas fa-chart-line text-white text-xl"></i>
+              <h2 class="text-white font-semibold text-lg">Progreso</h2>
+            </div>
+          </div>
+          
+          <div class="p-6 space-y-6">
+            <!-- Círculo de progreso -->
+            <div class="flex justify-center">
+              <div class="relative w-32 h-32">
+                <svg class="w-full h-full" viewBox="0 0 36 36">
+                  <path class="text-gray-200" stroke="currentColor" stroke-width="3" fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                  <path id="progressCircle" class="text-green-500 progress-ring" stroke="currentColor" stroke-width="3" 
+                    fill="none" stroke-linecap="round" stroke-dasharray="0, 100"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <span id="progressPercent" class="text-2xl font-bold text-gray-800">0%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-green-50 rounded-lg p-3 text-center">
+                <div id="answeredCount" class="text-2xl font-bold text-green-600">0</div>
+                <div class="text-xs text-gray-600 mt-1">Respondidas</div>
+              </div>
+              <div class="bg-blue-50 rounded-lg p-3 text-center">
+                <div id="totalCount" class="text-2xl font-bold text-blue-600">0</div>
+                <div class="text-xs text-gray-600 mt-1">Total</div>
+              </div>
+              <div class="bg-orange-50 rounded-lg p-3 text-center">
+                <div id="pendingCount" class="text-2xl font-bold text-orange-600">0</div>
+                <div class="text-xs text-gray-600 mt-1">Pendientes</div>
+              </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="space-y-3">
+              <button id="btnSubmit" disabled
+                class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3 rounded-lg hover:from-green-700 hover:to-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
+                <i class="fas fa-paper-plane"></i>
+                <span>Enviar Evaluación</span>
+              </button>
+              
+              <button id="btnClear"
+                class="w-full bg-gray-100 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-200 transition flex items-center justify-center space-x-2">
+                <i class="fas fa-eraser"></i>
+                <span>Limpiar Formulario</span>
+              </button>
+            </div>
+
+            <!-- Auto-guardado -->
+            <div class="bg-gray-50 rounded-lg p-3 flex items-center space-x-2">
+              <i class="fas fa-save text-gray-400"></i>
+              <span id="autosaveMsg" class="text-xs text-gray-600">Guardado automático activado</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Ayuda -->
+        <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow-md p-6 border border-blue-100">
+          <div class="flex items-start space-x-3">
+            <i class="fas fa-lightbulb text-yellow-500 text-xl mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-gray-800 mb-2">Instrucciones</h3>
+              <ul class="text-sm text-gray-700 space-y-2">
+                <li class="flex items-start">
+                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                  <span>Complete todos los datos del paciente</span>
+                </li>
+                <li class="flex items-start">
+                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                  <span>Responda todas las preguntas con Sí o No</span>
+                </li>
+                <li class="flex items-start">
+                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                  <span>Las preguntas con <span class="critical-badge text-red-600">⚠</span> son críticas</span>
+                </li>
+                <li class="flex items-start">
+                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                  <span>Sus respuestas se guardan automáticamente</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast de notificaciones -->
+  <div id="toast" class="hidden fixed top-6 right-6 bg-white rounded-lg shadow-2xl p-4 max-w-sm z-50 border-l-4">
+    <div class="flex items-start space-x-3">
+      <i id="toastIcon" class="text-xl mt-1"></i>
+      <div class="flex-1">
+        <p id="toastTitle" class="font-semibold text-gray-800"></p>
+        <p id="toastMessage" class="text-sm text-gray-600 mt-1"></p>
+      </div>
+      <button onclick="closeToast()" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // BANCO DE PREGUNTAS EDI
+
+const QUESTION_CACHE = {}; // { "01": [..preguntas..], "02": [..] }
+async function loadQuestions(ageGroup) {
+  if (!ageGroup) return [];
+  if (QUESTION_CACHE[ageGroup]) return QUESTION_CACHE[ageGroup];
+
+  const res = await fetch(`/api/form/questions/?age_group=${encodeURIComponent(ageGroup)}`);
+  if (!res.ok) throw new Error("No se pudieron cargar preguntas");
+  const data = await res.json();
+
+  QUESTION_CACHE[ageGroup] = data;
+  return data;
+}
+
+
+    const AREA_INFO = {
+      motriz_gruesa: { name: "Motriz Gruesa", icon: "fa-running", color: "blue" },
+      motriz_fina: { name: "Motriz Fina", icon: "fa-hand-sparkles", color: "cyan" },
+      lenguaje: { name: "Lenguaje", icon: "fa-comments", color: "green" },
+      social: { name: "Social", icon: "fa-users", color: "emerald" },
+      conocimiento: { name: "Conocimiento", icon: "fa-brain", color: "blue" },
+      neurological: { name: "Exploración Neurológica", icon: "fa-stethoscope", color: "red" },
+      alarm: { name: "Señales de Alarma", icon: "fa-exclamation-triangle", color: "orange" },
+      biological: { name: "Factores de Riesgo", icon: "fa-heartbeat", color: "red" }
+    };
+
+    const state = {
+      ageGroup: "",
+      answers: {},
+      patient: {
+        full_name: "", document_id: "", sex: "", date_of_birth: "",
+        phone: "", is_premature: false, gestational_weeks: null
+      }
+    };
+
+  async function init() {
+  loadDraft();
+  setupEventListeners();
+  await renderQuestions();
+  await updateProgress();
+}
+
+    function setupEventListeners() {
+     document.getElementById('ageGroup').addEventListener('change', async (e) => {
+  state.ageGroup = e.target.value;
+  state.answers = {};
+  await renderQuestions();
+  await updateProgress();
+  autosave();
+});
+
+
+      document.getElementById('isPremature').addEventListener('change', (e) => {
+        const fields = document.getElementById('prematureFields');
+        fields.classList.toggle('hidden', !e.target.checked);
+        state.patient.is_premature = e.target.checked;
+        autosave();
+      });
+
+      ['childName', 'documentId', 'sex', 'dob', 'phone', 'gestationalWeeks'].forEach(id => {
+        const field = document.getElementById(id);
+        if (!field) return;
+        field.addEventListener('input', () => {
+          const key = id === 'childName' ? 'full_name' :
+                     id === 'documentId' ? 'document_id' :
+                     id === 'dob' ? 'date_of_birth' :
+                     id === 'gestationalWeeks' ? 'gestational_weeks' : id;
+          state.patient[key] = field.value;
+          updateProgress();
+          autosave();
+        });
+      });
+
+      document.getElementById('btnSubmit').addEventListener('click', submitEvaluation);
+      document.getElementById('btnClear').addEventListener('click', clearForm);
+    }
+
+    async function renderQuestions() {
+     const container = document.getElementById('questionsContainer');
+    const questions = await loadQuestions(state.ageGroup);
+      
+      if (questions.length === 0) {
+        container.innerHTML = `
+          <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 text-center">
+            <i class="fas fa-info-circle text-yellow-500 text-4xl mb-3"></i>
+            <p class="text-gray-700">Seleccione un grupo de edad para ver las preguntas</p>
+          </div>
+        `;
+        return;
+      }
+
+      const byArea = {};
+      questions.forEach(q => {
+        if (!byArea[q.area]) byArea[q.area] = [];
+        byArea[q.area].push(q);
+      });
+
+      let html = '';
+      for (const [area, qs] of Object.entries(byArea)) {
+        const info = AREA_INFO[area] || { name: area, icon: "fa-circle-question", color: "gray" };
+
+        const colorClass = `from-${info.color}-600 to-${info.color}-700`;
+        
+        html += `
+          <div class="bg-white rounded-2xl shadow-md overflow-hidden card-hover">
+            <div class="bg-gradient-to-r ${colorClass} px-6 py-4 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <i class="fas ${info.icon} text-white text-xl"></i>
+                <h3 class="text-white font-semibold text-lg">${info.name}</h3>
+              </div>
+              <span class="bg-white/20 text-white text-xs px-3 py-1 rounded-full">${qs.length} preguntas</span>
+            </div>
+            <div class="p-6 space-y-4">
+        `;
+
+        qs.forEach(q => {
+          const answered = state.answers.hasOwnProperty(q.id);
+          const value = state.answers[q.id];
+          
+          html += `
+            <div class="question-card border border-gray-200 rounded-xl p-4 ${answered ? 'bg-gray-50' : ''}">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                  <div class="flex items-start space-x-2">
+                    ${q.critical ? '<span class="critical-badge text-red-500 text-lg">⚠</span>' : '<span class="text-gray-400 text-sm">○</span>'}
+                    <p class="text-gray-800 font-medium leading-relaxed">${q.text}</p>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-2 ml-6">${q.id}</p>
+                </div>
+              </div>
+              <div class="flex space-x-3 ml-6">
+                <button onclick="setAnswer('${q.id}', true)" 
+                  class="btn-yes flex-1 py-3 rounded-lg font-semibold text-white bg-gray-300 hover:bg-green-500 ${value === true ? 'active' : ''}">
+                  <i class="fas fa-check mr-2"></i>Sí
+                </button>
+                <button onclick="setAnswer('${q.id}', false)"
+                  class="btn-no flex-1 py-3 rounded-lg font-semibold text-white bg-gray-300 hover:bg-red-500 ${value === false ? 'active' : ''}">
+                  <i class="fas fa-times mr-2"></i>No
+                </button>
+              </div>
+            </div>
+          `;
+        });
+
+        html += '</div></div>';
+      }
+
+      container.innerHTML = html;
+    }
+
+window.setAnswer = async function(questionId, value) {
+  state.answers[questionId] = value;
+  await renderQuestions();
+  await updateProgress();
+  autosave();
+};
+
+
+    async function updateProgress() {
+      const questions = await loadQuestions(state.ageGroup);
+      const total = questions.length;
+      const answered = Object.keys(state.answers).length;
+      const pending = total - answered;
+      const percent = total > 0 ? Math.round((answered / total) * 100) : 0;
+
+      document.getElementById('answeredCount').textContent = answered;
+      document.getElementById('totalCount').textContent = total;
+      document.getElementById('pendingCount').textContent = pending;
+      document.getElementById('progressPercent').textContent = `${percent}%`;
+      document.getElementById('progressCircle').setAttribute('stroke-dasharray', `${percent}, 100`);
+
+      const canSubmit = state.ageGroup && state.patient.full_name.trim() && pending === 0;
+      document.getElementById('btnSubmit').disabled = !canSubmit;
+    }
+
+    function autosave() {
+      localStorage.setItem('edi_draft', JSON.stringify(state));
+      const msg = document.getElementById('autosaveMsg');
+      msg.innerHTML = '<i class="fas fa-check text-green-500"></i> <span class="text-xs text-gray-600">Guardado</span>';
+      setTimeout(() => {
+        msg.innerHTML = '<i class="fas fa-save text-gray-400"></i> <span class="text-xs text-gray-600">Guardado automático activado</span>';
+      }, 2000);
+    }
+
+  function loadDraft() {
+    const draft = localStorage.getItem('edi_draft');
+    if (!draft) return;
+
+    try {
+      const saved = JSON.parse(draft);
+
+      // Mezcla segura
+      if (saved.ageGroup) state.ageGroup = saved.ageGroup;
+      if (saved.answers) state.answers = saved.answers;
+      if (saved.patient) state.patient = { ...state.patient, ...saved.patient };
+
+      // Rehidratar UI
+      document.getElementById('childName').value = state.patient.full_name || "";
+      document.getElementById('documentId').value = state.patient.document_id || "";
+      document.getElementById('sex').value = state.patient.sex || "";
+      document.getElementById('dob').value = state.patient.date_of_birth || "";
+      document.getElementById('phone').value = state.patient.phone || "";
+      document.getElementById('ageGroup').value = state.ageGroup || "";
+
+      document.getElementById('isPremature').checked = !!state.patient.is_premature;
+      document.getElementById('prematureFields').classList.toggle('hidden', !state.patient.is_premature);
+
+      const gw = document.getElementById('gestationalWeeks');
+      if (gw) gw.value = state.patient.gestational_weeks || "";
+    } catch (e) {
+      console.error("Draft inválido:", e);
+    }
+  }
+
+  // Arranque
+  document.addEventListener("DOMContentLoaded", init);
+  function clearForm() {
+  if (!confirm("¿Desea limpiar el formulario y borrar el borrador guardado?")) return;
+
+  localStorage.removeItem('edi_draft');
+
+  state.ageGroup = "";
+  state.answers = {};
+  state.patient = {
+    full_name: "", document_id: "", sex: "", date_of_birth: "",
+    phone: "", is_premature: false, gestational_weeks: null
+  };
+
+  document.getElementById('childName').value = "";
+  document.getElementById('documentId').value = "";
+  document.getElementById('sex').value = "";
+  document.getElementById('dob').value = "";
+  document.getElementById('phone').value = "";
+  document.getElementById('ageGroup').value = "";
+
+  document.getElementById('isPremature').checked = false;
+  document.getElementById('prematureFields').classList.add('hidden');
+  const gw = document.getElementById('gestationalWeeks');
+  if (gw) gw.value = "";
+
+  renderQuestions();
+  updateProgress();
+  showToast("info", "Limpio", "Formulario reiniciado.");
+}
+
+async function submitEvaluation() {
+  try {
+const questions = await loadQuestions(state.ageGroup);
+    const answers = questions.map(q => ({
+      question_code: q.id,
+      value: state.answers[q.id] === true
+    }));
+
+    const payload = {
+      full_name: state.patient.full_name.trim(),
+      document_id: state.patient.document_id || null,
+      phone: state.patient.phone || null,
+      sex: state.patient.sex || null,
+      date_of_birth: state.patient.date_of_birth || null,
+      age_group: state.ageGroup,
+      is_premature: !!state.patient.is_premature,
+      gestational_weeks: state.patient.gestational_weeks ? Number(state.patient.gestational_weeks) : null,
+      answers
+    };
+
+    // TODO: cambia la URL por tu endpoint real DRF
+    const res = await fetch("/api/form/submit/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      console.error(txt);
+      showToast("error", "Error", "No se pudo enviar. Revisa consola.");
+      return;
+    }
+
+    localStorage.removeItem("edi_draft");
+    showToast("success", "Enviado", "Evaluación enviada con éxito.");
+  } catch (e) {
+    console.error(e);
+    showToast("error", "Sin conexión", "Servidor no disponible.");
+  }
+}
+
+function showToast(type, title, message) {
+  const toast = document.getElementById('toast');
+  const icon = document.getElementById('toastIcon');
+  const tTitle = document.getElementById('toastTitle');
+  const tMsg = document.getElementById('toastMessage');
+
+  const styles = {
+    success: { border: 'border-green-500', icon: 'fa-check-circle text-green-500' },
+    error:   { border: 'border-red-500', icon: 'fa-times-circle text-red-500' },
+    info:    { border: 'border-blue-500', icon: 'fa-info-circle text-blue-500' },
+    warn:    { border: 'border-yellow-500', icon: 'fa-exclamation-triangle text-yellow-500' },
+  };
+  const s = styles[type] || styles.info;
+
+  toast.className = `toast fixed top-6 right-6 bg-white rounded-lg shadow-2xl p-4 max-w-sm z-50 border-l-4 ${s.border}`;
+  icon.className = `fas ${s.icon} text-xl mt-1`;
+  tTitle.textContent = title || "";
+  tMsg.textContent = message || "";
+
+  toast.classList.remove('hidden');
+  setTimeout(() => closeToast(), 3000);
+}
+
+function closeToast() {
+  document.getElementById('toast').classList.add('hidden');
+}
+  </script>
+</body>
+</html>
