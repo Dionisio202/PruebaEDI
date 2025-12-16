@@ -8,62 +8,32 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
     * { font-family: 'Inter', sans-serif; }
-    
-    .gradient-bg {
-      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    }
-    
-    .card-hover {
-      transition: all 0.3s ease;
-    }
-    
+
+    .gradient-bg { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+    .card-hover { transition: all 0.3s ease; }
     .card-hover:hover {
       transform: translateY(-2px);
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
-    
-    .btn-yes, .btn-no {
-      transition: all 0.2s ease;
-    }
-    
-    .btn-yes.active {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      transform: scale(1.05);
-    }
-    
-    .btn-no.active {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-      transform: scale(1.05);
-    }
-    
-    .progress-ring {
-      transform: rotate(-90deg);
-    }
-    
-    .critical-badge {
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .5; }
-    }
-    
-    .toast {
-      animation: slideIn 0.3s ease;
-    }
-    
+
+    .btn-yes, .btn-no { transition: all 0.2s ease; }
+    .btn-yes.active { background: linear-gradient(135deg, #10b981 0%, #059669 100%); transform: scale(1.05); }
+    .btn-no.active { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); transform: scale(1.05); }
+    .progress-ring { transform: rotate(-90deg); }
+
+    .critical-badge { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+    .toast { animation: slideIn 0.3s ease; }
     @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .field-error {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15) !important;
     }
   </style>
 </head>
@@ -77,7 +47,14 @@
             <i class="fas fa-child text-2xl"></i>
           </div>
           <div>
-            <h1 class="text-2xl font-bold">Prueba EDI</h1>
+           <h1 class="text-2xl font-bold">
+  <a href="/admin/"
+     class="inline-block hover:underline hover:text-white/90 transition"
+     title="Ir al panel administrativo">
+    Prueba EDI
+  </a>
+</h1>
+
             <p class="text-white/80 text-sm">Evaluación del Desarrollo Infantil</p>
           </div>
         </div>
@@ -91,11 +68,11 @@
 
   <div class="container mx-auto px-4 py-8 max-w-7xl">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- Panel Izquierdo: Datos del Paciente -->
+
+      <!-- Panel Izquierdo -->
       <div class="lg:col-span-2 space-y-6">
-        
-        <!-- Card: Datos del Paciente -->
+
+        <!-- Datos del Paciente -->
         <div class="bg-white rounded-2xl shadow-md overflow-hidden card-hover">
           <div class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -104,7 +81,7 @@
             </div>
             <span class="bg-white/20 text-white text-xs px-3 py-1 rounded-full">Obligatorio</span>
           </div>
-          
+
           <div class="p-6 space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -115,14 +92,15 @@
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   placeholder="Ej: Juan Carlos Pérez López">
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   <i class="fas fa-id-card text-blue-500 mr-2"></i>Documento de identidad
                 </label>
                 <input type="text" id="documentId"
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                  placeholder="Cédula o historia clínica">
+                  placeholder="Cédula o historia clínica (Enter para buscar)">
+                <p class="text-xs text-gray-500 mt-1">Presione <b>Enter</b> para buscar al paciente.</p>
               </div>
             </div>
 
@@ -138,7 +116,7 @@
                   <option value="O">Otro</option>
                 </select>
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   <i class="fas fa-calendar text-blue-500 mr-2"></i>Fecha de nacimiento
@@ -146,7 +124,7 @@
                 <input type="date" id="dob"
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
               </div>
-              
+
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   <i class="fas fa-phone text-blue-500 mr-2"></i>Teléfono
@@ -165,12 +143,12 @@
                   <i class="fas fa-baby text-orange-500 mr-2"></i>¿El paciente es prematuro?
                 </label>
               </div>
-              
+
               <div id="prematureFields" class="hidden">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  <i class="fas fa-hourglass-half text-orange-500 mr-2"></i>Semanas de gestación al nacer
+                  <i class="fas fa-hourglass-half text-orange-500 mr-2"></i>Semanas de gestación al nacer *
                 </label>
-                <input type="number" id="gestationalWeeks" min="20" max="42"
+                <input type="number" id="gestationalWeeks" min="20" max="36"
                   class="w-full md:w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
                   placeholder="Ej: 34">
               </div>
@@ -188,7 +166,7 @@
           </div>
         </div>
 
-        <!-- Card: Selección de Grupo -->
+        <!-- Grupo -->
         <div class="bg-white rounded-2xl shadow-md overflow-hidden card-hover">
           <div class="bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-4">
             <div class="flex items-center space-x-3">
@@ -196,14 +174,17 @@
               <h2 class="text-white font-semibold text-lg">Grupo de Edad EDI</h2>
             </div>
           </div>
-          
+
           <div class="p-6">
             <label class="block text-sm font-medium text-gray-700 mb-3">
-              Seleccione el grupo de edad correspondiente *
+              Grupo EDI (calculado automáticamente)
+              <span class="text-xs text-gray-500 block mt-1">
+                Se calcula con la fecha de nacimiento (y edad corregida si es prematuro).
+              </span>
             </label>
-            <select id="ageGroup" required
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-lg font-medium">
-              <option value="">-- Seleccione un grupo --</option>
+            <select id="ageGroup" disabled
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-800 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-lg font-medium">
+              <option value="">-- Ingrese fecha de nacimiento --</option>
               <option value="01">Grupo 01 (1 mes - 1m 29d)</option>
               <option value="02">Grupo 02 (2 meses - 2m 29d)</option>
               <option value="03">Grupo 03 (3 meses - 3m 29d)</option>
@@ -223,15 +204,12 @@
           </div>
         </div>
 
-        <!-- Card: Cuestionario -->
+        <!-- Cuestionario -->
         <div id="questionsContainer" class="space-y-4"></div>
-
       </div>
 
-      <!-- Panel Derecho: Progreso y Acciones -->
+      <!-- Panel Derecho -->
       <div class="space-y-6">
-        
-        <!-- Card: Progreso -->
         <div class="bg-white rounded-2xl shadow-md overflow-hidden sticky top-6">
           <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4">
             <div class="flex items-center space-x-3">
@@ -239,15 +217,14 @@
               <h2 class="text-white font-semibold text-lg">Progreso</h2>
             </div>
           </div>
-          
+
           <div class="p-6 space-y-6">
-            <!-- Círculo de progreso -->
             <div class="flex justify-center">
               <div class="relative w-32 h-32">
                 <svg class="w-full h-full" viewBox="0 0 36 36">
                   <path class="text-gray-200" stroke="currentColor" stroke-width="3" fill="none"
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                  <path id="progressCircle" class="text-green-500 progress-ring" stroke="currentColor" stroke-width="3" 
+                  <path id="progressCircle" class="text-green-500 progress-ring" stroke="currentColor" stroke-width="3"
                     fill="none" stroke-linecap="round" stroke-dasharray="0, 100"
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
                 </svg>
@@ -257,7 +234,6 @@
               </div>
             </div>
 
-            <!-- Estadísticas -->
             <div class="grid grid-cols-3 gap-3">
               <div class="bg-green-50 rounded-lg p-3 text-center">
                 <div id="answeredCount" class="text-2xl font-bold text-green-600">0</div>
@@ -273,14 +249,13 @@
               </div>
             </div>
 
-            <!-- Botones de acción -->
             <div class="space-y-3">
               <button id="btnSubmit" disabled
                 class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3 rounded-lg hover:from-green-700 hover:to-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
                 <i class="fas fa-paper-plane"></i>
                 <span>Enviar Evaluación</span>
               </button>
-              
+
               <button id="btnClear"
                 class="w-full bg-gray-100 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-200 transition flex items-center justify-center space-x-2">
                 <i class="fas fa-eraser"></i>
@@ -288,7 +263,6 @@
               </button>
             </div>
 
-            <!-- Auto-guardado -->
             <div class="bg-gray-50 rounded-lg p-3 flex items-center space-x-2">
               <i class="fas fa-save text-gray-400"></i>
               <span id="autosaveMsg" class="text-xs text-gray-600">Guardado automático activado</span>
@@ -296,38 +270,26 @@
           </div>
         </div>
 
-        <!-- Card: Ayuda -->
         <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow-md p-6 border border-blue-100">
           <div class="flex items-start space-x-3">
             <i class="fas fa-lightbulb text-yellow-500 text-xl mt-1"></i>
             <div>
               <h3 class="font-semibold text-gray-800 mb-2">Instrucciones</h3>
               <ul class="text-sm text-gray-700 space-y-2">
-                <li class="flex items-start">
-                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
-                  <span>Complete todos los datos del paciente</span>
-                </li>
-                <li class="flex items-start">
-                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
-                  <span>Responda todas las preguntas con Sí o No</span>
-                </li>
-                <li class="flex items-start">
-                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
-                  <span>Las preguntas con <span class="critical-badge text-red-600">⚠</span> son críticas</span>
-                </li>
-                <li class="flex items-start">
-                  <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
-                  <span>Sus respuestas se guardan automáticamente</span>
-                </li>
+                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i><span>Complete los datos del paciente</span></li>
+                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i><span>Responda todas las preguntas con Sí o No</span></li>
+                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i><span>Las preguntas con <span class="critical-badge text-red-600">⚠</span> son críticas</span></li>
+                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i><span>Sus respuestas se guardan automáticamente</span></li>
               </ul>
             </div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
-  <!-- Toast de notificaciones -->
+  <!-- Toast -->
   <div id="toast" class="hidden fixed top-6 right-6 bg-white rounded-lg shadow-2xl p-4 max-w-sm z-50 border-l-4">
     <div class="flex items-start space-x-3">
       <i id="toastIcon" class="text-xl mt-1"></i>
@@ -342,22 +304,36 @@
   </div>
 
   <script>
-    // BANCO DE PREGUNTAS EDI
+    // =========================
+    //   BANCO DE PREGUNTAS
+    // =========================
+    const QUESTION_CACHE = {}; // { "01": [..], ... }
 
-const QUESTION_CACHE = {}; // { "01": [..preguntas..], "02": [..] }
-async function loadQuestions(ageGroup) {
-  if (!ageGroup) return [];
-  if (QUESTION_CACHE[ageGroup]) return QUESTION_CACHE[ageGroup];
+    function normalizeQuestions(raw) {
+      return (raw || []).map(q => ({
+        id: q.code ?? q.id,
+        text: q.text ?? q.question_text ?? "",
+        area: q.area ?? null,
+        type: q.question_type ?? q.type ?? null,  // "AREA" | "NEURO" | "ALARM" | "ALERT" | "BIO"
+        critical: q.is_critical ?? q.critical ?? false
+      })).filter(q => !!q.id && !!q.text);
+    }
 
-  const res = await fetch(`/api/form/questions/?age_group=${encodeURIComponent(ageGroup)}`);
-  if (!res.ok) throw new Error("No se pudieron cargar preguntas");
-  const data = await res.json();
+    async function loadQuestions(ageGroup) {
+      if (!ageGroup) return [];
+      if (QUESTION_CACHE[ageGroup]) return QUESTION_CACHE[ageGroup];
 
-  QUESTION_CACHE[ageGroup] = data;
-  return data;
-}
+      const res = await fetch(`/api/form/questions/?age_group=${encodeURIComponent(ageGroup)}`);
+      if (!res.ok) throw new Error("No se pudieron cargar preguntas");
+      const raw = await res.json();
 
+      QUESTION_CACHE[ageGroup] = normalizeQuestions(raw);
+      return QUESTION_CACHE[ageGroup];
+    }
 
+    // =========================
+    //   UI / ESTADOS
+    // =========================
     const AREA_INFO = {
       motriz_gruesa: { name: "Motriz Gruesa", icon: "fa-running", color: "blue" },
       motriz_fina: { name: "Motriz Fina", icon: "fa-hand-sparkles", color: "cyan" },
@@ -366,51 +342,252 @@ async function loadQuestions(ageGroup) {
       conocimiento: { name: "Conocimiento", icon: "fa-brain", color: "blue" },
       neurological: { name: "Exploración Neurológica", icon: "fa-stethoscope", color: "red" },
       alarm: { name: "Señales de Alarma", icon: "fa-exclamation-triangle", color: "orange" },
+      alert: { name: "Señales de Alerta", icon: "fa-bell", color: "yellow" },
       biological: { name: "Factores de Riesgo", icon: "fa-heartbeat", color: "red" }
     };
 
     const state = {
       ageGroup: "",
-      answers: {},
+      answers: {}, // { [questionCode]: true|false }
       patient: {
-        full_name: "", document_id: "", sex: "", date_of_birth: "",
-        phone: "", is_premature: false, gestational_weeks: null
+        full_name: "",
+        document_id: "",
+        sex: "",
+        date_of_birth: "",
+        phone: "",
+        is_premature: false,
+        gestational_weeks: null
       }
     };
 
-  async function init() {
-  loadDraft();
-  setupEventListeners();
-  await renderQuestions();
-  await updateProgress();
-}
+    // =========================
+    //   NUEVO: BÚSQUEDA PACIENTE POR DOCUMENTO (ENTER)
+    // =========================
+    async function fetchPatientByDocument(documentId) {
+      const url = `/api/form/patient/by-document/?document_id=${encodeURIComponent(documentId)}`;
+      const res = await fetch(url);
+
+      if (res.status === 404) return { found: false, patient: null };
+      if (!res.ok) throw new Error("Error consultando paciente");
+
+      const data = await res.json();
+
+      // Soporta dos formatos:
+      // 1) {found:true, patient:{...}}
+      // 2) {...paciente...} directo
+      if (data && typeof data === "object" && "found" in data) {
+        return { found: !!data.found, patient: data.patient ?? null };
+      }
+      return { found: true, patient: data };
+    }
+
+    function setInputValue(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.value = value ?? "";
+    }
+
+    async function applyPatientToForm(patient) {
+      // Actualiza state
+      state.patient.full_name = patient.full_name ?? "";
+      state.patient.document_id = patient.document_id ?? "";
+      state.patient.sex = patient.sex ?? "";
+      state.patient.date_of_birth = patient.date_of_birth ?? "";
+      state.patient.phone = patient.phone ?? "";
+      state.patient.is_premature = !!patient.is_premature;
+      state.patient.gestational_weeks = patient.gestational_weeks ?? null;
+
+      // Rellena inputs
+      setInputValue("childName", state.patient.full_name);
+      setInputValue("documentId", state.patient.document_id);
+      setInputValue("sex", state.patient.sex);
+      setInputValue("dob", state.patient.date_of_birth);
+      setInputValue("phone", state.patient.phone);
+
+      // Prematuro UI
+      const prem = document.getElementById("isPremature");
+      const fields = document.getElementById("prematureFields");
+      if (prem) prem.checked = state.patient.is_premature;
+      if (fields) fields.classList.toggle("hidden", !state.patient.is_premature);
+      setInputValue("gestationalWeeks", state.patient.gestational_weeks ?? "");
+
+      // Recalcular grupo + preguntas/progreso
+      await recalcGroupAndReloadIfNeeded();
+      await renderQuestions();
+      await updateProgress();
+      validatePatientFields(true);
+      autosave();
+    }
+
+    async function handleDocumentEnterLookup() {
+      const raw = (document.getElementById("documentId")?.value || "").trim();
+      if (!raw) {
+        showToast("warn", "Documento vacío", "Ingrese un número de documento e intente nuevamente.");
+        return;
+      }
+
+      try {
+        const result = await fetchPatientByDocument(raw);
+
+        if (!result.found || !result.patient) {
+          showToast("error", "Paciente no registrado", "No se encontraron datos para este número de documento.");
+          return;
+        }
+
+        showToast("success", "Paciente ya registrado", "Se cargaron los datos del paciente.");
+        await applyPatientToForm(result.patient);
+      } catch (e) {
+        console.error(e);
+        showToast("error", "Error", "No se pudo consultar el paciente. Revisa el backend o la URL.");
+      }
+    }
+
+    // =========================
+    //   CÁLCULO AUTOMÁTICO DE GRUPO
+    // =========================
+    function parseISODate(value) {
+      if (!value) return null;
+      const parts = value.split("-").map(Number);
+      if (parts.length !== 3) return null;
+      const [y, m, d] = parts;
+      if (!y || !m || !d) return null;
+      return new Date(y, m - 1, d);
+    }
+
+    function diffMonths(fromDate, toDate) {
+      let months = (toDate.getFullYear() - fromDate.getFullYear()) * 12
+                 + (toDate.getMonth() - fromDate.getMonth());
+      if (toDate.getDate() < fromDate.getDate()) months -= 1;
+      return Math.max(0, months);
+    }
+
+    function computeCorrectedMonths() {
+      const dob = parseISODate(state.patient.date_of_birth);
+      if (!dob) return null;
+
+      const today = new Date();
+
+      if (!state.patient.is_premature) {
+        return diffMonths(dob, today);
+      }
+
+      const gw = Number(state.patient.gestational_weeks);
+      if (!Number.isFinite(gw)) return null;
+      if (gw < 20 || gw > 42) return null;
+
+      if (gw >= 37) {
+        state.patient.is_premature = false;
+        document.getElementById("isPremature").checked = false;
+        document.getElementById("prematureFields").classList.add("hidden");
+
+        showToast(
+          "info",
+          "No aplica edad corregida",
+          "Con 37 semanas o más, el paciente se considera a término. Se calculará edad cronológica."
+        );
+
+        return diffMonths(dob, today);
+      }
+
+      const weeksEarly = 40 - gw;
+      const daysCorrection = weeksEarly * 7;
+
+      const correctedDob = new Date(dob);
+      correctedDob.setDate(correctedDob.getDate() + daysCorrection);
+
+      return diffMonths(correctedDob, today);
+    }
+
+    function getAgeGroupFromMonths(months) {
+      if (months === null) return "";
+
+      if (months <= 1) return "01";
+      if (months === 2) return "02";
+      if (months === 3) return "03";
+      if (months === 4) return "04";
+      if (months <= 6) return "05-06";
+      if (months <= 9) return "07-09";
+      if (months <= 12) return "10-12";
+      if (months <= 15) return "13-15";
+      if (months <= 18) return "16-18";
+      if (months <= 24) return "19-24";
+      if (months <= 30) return "25-30";
+      if (months <= 36) return "31-36";
+      if (months <= 48) return "37-48";
+      if (months <= 59) return "49-59";
+      return "60-71";
+    }
+
+    async function recalcGroupAndReloadIfNeeded() {
+      const prev = state.ageGroup;
+
+      const months = computeCorrectedMonths();
+      const group = getAgeGroupFromMonths(months);
+
+      state.ageGroup = group || "";
+      const sel = document.getElementById("ageGroup");
+      if (sel) sel.value = state.ageGroup;
+
+      if (state.ageGroup !== prev) {
+        state.answers = {};
+        await renderQuestions();
+      }
+
+      await updateProgress();
+      validatePatientFields(true);
+      autosave();
+    }
+
+    async function init() {
+      loadDraft();
+      setupEventListeners();
+      await recalcGroupAndReloadIfNeeded();
+      await renderQuestions();
+      await updateProgress();
+      validatePatientFields(true);
+    }
 
     function setupEventListeners() {
-     document.getElementById('ageGroup').addEventListener('change', async (e) => {
-  state.ageGroup = e.target.value;
-  state.answers = {};
-  await renderQuestions();
-  await updateProgress();
-  autosave();
-});
-
-
-      document.getElementById('isPremature').addEventListener('change', (e) => {
+      document.getElementById('isPremature').addEventListener('change', async (e) => {
         const fields = document.getElementById('prematureFields');
         fields.classList.toggle('hidden', !e.target.checked);
         state.patient.is_premature = e.target.checked;
-        autosave();
+        await recalcGroupAndReloadIfNeeded();
       });
+
+      // NUEVO: Enter en documento -> busca paciente
+      const doc = document.getElementById("documentId");
+      if (doc) {
+        doc.addEventListener("keydown", async (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            await handleDocumentEnterLookup();
+          }
+        });
+      }
 
       ['childName', 'documentId', 'sex', 'dob', 'phone', 'gestationalWeeks'].forEach(id => {
         const field = document.getElementById(id);
         if (!field) return;
-        field.addEventListener('input', () => {
-          const key = id === 'childName' ? 'full_name' :
-                     id === 'documentId' ? 'document_id' :
-                     id === 'dob' ? 'date_of_birth' :
-                     id === 'gestationalWeeks' ? 'gestational_weeks' : id;
+
+        const eventName = (field.tagName.toLowerCase() === "select") ? "change" : "input";
+
+        field.addEventListener(eventName, async () => {
+          const key = id === 'childName' ? 'full_name'
+                    : id === 'documentId' ? 'document_id'
+                    : id === 'dob' ? 'date_of_birth'
+                    : id === 'gestationalWeeks' ? 'gestational_weeks'
+                    : id;
+
           state.patient[key] = field.value;
+
+          // Si cambia DOB o semanas, recalcular grupo
+          if (id === 'dob' || id === 'gestationalWeeks') {
+            await recalcGroupAndReloadIfNeeded();
+            return;
+          }
+
+          validatePatientFields(true);
           updateProgress();
           autosave();
         });
@@ -420,32 +597,53 @@ async function loadQuestions(ageGroup) {
       document.getElementById('btnClear').addEventListener('click', clearForm);
     }
 
+    // =========================
+    //   RENDER PREGUNTAS (SIN NULL)
+    // =========================
     async function renderQuestions() {
-     const container = document.getElementById('questionsContainer');
-    const questions = await loadQuestions(state.ageGroup);
-      
-      if (questions.length === 0) {
+      const container = document.getElementById('questionsContainer');
+      const questions = await loadQuestions(state.ageGroup);
+
+      if (!state.ageGroup) {
         container.innerHTML = `
           <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 text-center">
             <i class="fas fa-info-circle text-yellow-500 text-4xl mb-3"></i>
-            <p class="text-gray-700">Seleccione un grupo de edad para ver las preguntas</p>
+            <p class="text-gray-700">Ingrese la fecha de nacimiento para cargar el grupo y las preguntas</p>
           </div>
         `;
         return;
       }
 
-      const byArea = {};
+      if (questions.length === 0) {
+        container.innerHTML = `
+          <div class="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+            <i class="fas fa-triangle-exclamation text-red-500 text-4xl mb-3"></i>
+            <p class="text-gray-700">No hay preguntas para este grupo (o el API devolvió vacío).</p>
+          </div>
+        `;
+        return;
+      }
+
+      const bySection = {};
       questions.forEach(q => {
-        if (!byArea[q.area]) byArea[q.area] = [];
-        byArea[q.area].push(q);
+        const t = (q.type || "").toUpperCase();
+        const sectionKey =
+          q.area ? q.area :
+          t === "NEURO" ? "neurological" :
+          t === "ALARM" ? "alarm" :
+          t === "ALERT" ? "alert" :
+          t === "BIO" ? "biological" :
+          "other";
+
+        if (!bySection[sectionKey]) bySection[sectionKey] = [];
+        bySection[sectionKey].push(q);
       });
 
       let html = '';
-      for (const [area, qs] of Object.entries(byArea)) {
-        const info = AREA_INFO[area] || { name: area, icon: "fa-circle-question", color: "gray" };
-
+      for (const [section, qs] of Object.entries(bySection)) {
+        const info = AREA_INFO[section] || { name: "Otros", icon: "fa-circle-question", color: "gray" };
         const colorClass = `from-${info.color}-600 to-${info.color}-700`;
-        
+
         html += `
           <div class="bg-white rounded-2xl shadow-md overflow-hidden card-hover">
             <div class="bg-gradient-to-r ${colorClass} px-6 py-4 flex items-center justify-between">
@@ -459,9 +657,9 @@ async function loadQuestions(ageGroup) {
         `;
 
         qs.forEach(q => {
-          const answered = state.answers.hasOwnProperty(q.id);
+          const answered = Object.prototype.hasOwnProperty.call(state.answers, q.id);
           const value = state.answers[q.id];
-          
+
           html += `
             <div class="question-card border border-gray-200 rounded-xl p-4 ${answered ? 'bg-gray-50' : ''}">
               <div class="flex items-start justify-between mb-3">
@@ -470,11 +668,10 @@ async function loadQuestions(ageGroup) {
                     ${q.critical ? '<span class="critical-badge text-red-500 text-lg">⚠</span>' : '<span class="text-gray-400 text-sm">○</span>'}
                     <p class="text-gray-800 font-medium leading-relaxed">${q.text}</p>
                   </div>
-                  <p class="text-xs text-gray-400 mt-2 ml-6">${q.id}</p>
                 </div>
               </div>
               <div class="flex space-x-3 ml-6">
-                <button onclick="setAnswer('${q.id}', true)" 
+                <button onclick="setAnswer('${q.id}', true)"
                   class="btn-yes flex-1 py-3 rounded-lg font-semibold text-white bg-gray-300 hover:bg-green-500 ${value === true ? 'active' : ''}">
                   <i class="fas fa-check mr-2"></i>Sí
                 </button>
@@ -487,20 +684,22 @@ async function loadQuestions(ageGroup) {
           `;
         });
 
-        html += '</div></div>';
+        html += `</div></div>`;
       }
 
       container.innerHTML = html;
     }
 
-window.setAnswer = async function(questionId, value) {
-  state.answers[questionId] = value;
-  await renderQuestions();
-  await updateProgress();
-  autosave();
-};
+    window.setAnswer = async function(questionId, value) {
+      state.answers[questionId] = value;
+      await renderQuestions();
+      await updateProgress();
+      autosave();
+    };
 
-
+    // =========================
+    //   PROGRESO + BOTÓN
+    // =========================
     async function updateProgress() {
       const questions = await loadQuestions(state.ageGroup);
       const total = questions.length;
@@ -514,10 +713,69 @@ window.setAnswer = async function(questionId, value) {
       document.getElementById('progressPercent').textContent = `${percent}%`;
       document.getElementById('progressCircle').setAttribute('stroke-dasharray', `${percent}, 100`);
 
-      const canSubmit = state.ageGroup && state.patient.full_name.trim() && pending === 0;
+      const missing = getMissingPatientFields();
+      const canSubmit = state.ageGroup && missing.length === 0 && pending === 0;
       document.getElementById('btnSubmit').disabled = !canSubmit;
     }
 
+    // =========================
+    //   VALIDACIÓN FALTANTES
+    // =========================
+    function getMissingPatientFields() {
+      const missing = [];
+
+      if (!state.patient.full_name || !state.patient.full_name.trim()) {
+        missing.push("Nombre completo");
+      }
+
+      if (!state.patient.date_of_birth) {
+        missing.push("Fecha de nacimiento");
+      }
+
+      if (!state.ageGroup) {
+        missing.push("Grupo EDI (no se pudo calcular)");
+      }
+
+      if (state.patient.is_premature) {
+        const gw = state.patient.gestational_weeks;
+        if (gw === null || gw === "" || Number.isNaN(Number(gw))) {
+          missing.push("Semanas de gestación");
+        }
+      }
+
+      return missing;
+    }
+
+    function validatePatientFields(silent = false) {
+      ['childName','dob','gestationalWeeks'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('field-error');
+      });
+
+      const missing = getMissingPatientFields();
+
+      if ((!state.patient.full_name || !state.patient.full_name.trim())) {
+        document.getElementById('childName')?.classList.add('field-error');
+      }
+      if (!state.patient.date_of_birth) {
+        document.getElementById('dob')?.classList.add('field-error');
+      }
+      if (state.patient.is_premature) {
+        const gw = state.patient.gestational_weeks;
+        if (gw === null || gw === "" || Number.isNaN(Number(gw))) {
+          document.getElementById('gestationalWeeks')?.classList.add('field-error');
+        }
+      }
+
+      if (!silent && missing.length > 0) {
+        showToast("warn", "Faltan datos", `Complete: ${missing.join(", ")}.`);
+      }
+      return missing.length === 0;
+    }
+
+    // =========================
+    //   AUTOGUARDADO
+    // =========================
     function autosave() {
       localStorage.setItem('edi_draft', JSON.stringify(state));
       const msg = document.getElementById('autosaveMsg');
@@ -527,135 +785,164 @@ window.setAnswer = async function(questionId, value) {
       }, 2000);
     }
 
-  function loadDraft() {
-    const draft = localStorage.getItem('edi_draft');
-    if (!draft) return;
+    function loadDraft() {
+      const draft = localStorage.getItem('edi_draft');
+      if (!draft) return;
 
-    try {
-      const saved = JSON.parse(draft);
+      try {
+        const saved = JSON.parse(draft);
 
-      // Mezcla segura
-      if (saved.ageGroup) state.ageGroup = saved.ageGroup;
-      if (saved.answers) state.answers = saved.answers;
-      if (saved.patient) state.patient = { ...state.patient, ...saved.patient };
+        if (saved.answers) state.answers = saved.answers;
+        if (saved.patient) state.patient = { ...state.patient, ...saved.patient };
 
-      // Rehidratar UI
-      document.getElementById('childName').value = state.patient.full_name || "";
-      document.getElementById('documentId').value = state.patient.document_id || "";
-      document.getElementById('sex').value = state.patient.sex || "";
-      document.getElementById('dob').value = state.patient.date_of_birth || "";
-      document.getElementById('phone').value = state.patient.phone || "";
-      document.getElementById('ageGroup').value = state.ageGroup || "";
+        document.getElementById('childName').value = state.patient.full_name || "";
+        document.getElementById('documentId').value = state.patient.document_id || "";
+        document.getElementById('sex').value = state.patient.sex || "";
+        document.getElementById('dob').value = state.patient.date_of_birth || "";
+        document.getElementById('phone').value = state.patient.phone || "";
 
-      document.getElementById('isPremature').checked = !!state.patient.is_premature;
-      document.getElementById('prematureFields').classList.toggle('hidden', !state.patient.is_premature);
+        document.getElementById('isPremature').checked = !!state.patient.is_premature;
+        document.getElementById('prematureFields').classList.toggle('hidden', !state.patient.is_premature);
 
+        const gw = document.getElementById('gestationalWeeks');
+        if (gw) gw.value = state.patient.gestational_weeks || "";
+
+        const sel = document.getElementById('ageGroup');
+        if (sel) sel.value = "";
+      } catch (e) {
+        console.error("Draft inválido:", e);
+      }
+    }
+
+    // =========================
+    //   ACCIONES
+    // =========================
+    function clearForm() {
+      if (!confirm("¿Desea limpiar el formulario y borrar el borrador guardado?")) return;
+
+      localStorage.removeItem('edi_draft');
+
+      state.ageGroup = "";
+      state.answers = {};
+      state.patient = {
+        full_name: "",
+        document_id: "",
+        sex: "",
+        date_of_birth: "",
+        phone: "",
+        is_premature: false,
+        gestational_weeks: null
+      };
+
+      document.getElementById('childName').value = "";
+      document.getElementById('documentId').value = "";
+      document.getElementById('sex').value = "";
+      document.getElementById('dob').value = "";
+      document.getElementById('phone').value = "";
+      document.getElementById('ageGroup').value = "";
+
+      document.getElementById('isPremature').checked = false;
+      document.getElementById('prematureFields').classList.add('hidden');
       const gw = document.getElementById('gestationalWeeks');
-      if (gw) gw.value = state.patient.gestational_weeks || "";
-    } catch (e) {
-      console.error("Draft inválido:", e);
-    }
-  }
+      if (gw) gw.value = "";
 
-  // Arranque
-  document.addEventListener("DOMContentLoaded", init);
-  function clearForm() {
-  if (!confirm("¿Desea limpiar el formulario y borrar el borrador guardado?")) return;
-
-  localStorage.removeItem('edi_draft');
-
-  state.ageGroup = "";
-  state.answers = {};
-  state.patient = {
-    full_name: "", document_id: "", sex: "", date_of_birth: "",
-    phone: "", is_premature: false, gestational_weeks: null
-  };
-
-  document.getElementById('childName').value = "";
-  document.getElementById('documentId').value = "";
-  document.getElementById('sex').value = "";
-  document.getElementById('dob').value = "";
-  document.getElementById('phone').value = "";
-  document.getElementById('ageGroup').value = "";
-
-  document.getElementById('isPremature').checked = false;
-  document.getElementById('prematureFields').classList.add('hidden');
-  const gw = document.getElementById('gestationalWeeks');
-  if (gw) gw.value = "";
-
-  renderQuestions();
-  updateProgress();
-  showToast("info", "Limpio", "Formulario reiniciado.");
-}
-
-async function submitEvaluation() {
-  try {
-const questions = await loadQuestions(state.ageGroup);
-    const answers = questions.map(q => ({
-      question_code: q.id,
-      value: state.answers[q.id] === true
-    }));
-
-    const payload = {
-      full_name: state.patient.full_name.trim(),
-      document_id: state.patient.document_id || null,
-      phone: state.patient.phone || null,
-      sex: state.patient.sex || null,
-      date_of_birth: state.patient.date_of_birth || null,
-      age_group: state.ageGroup,
-      is_premature: !!state.patient.is_premature,
-      gestational_weeks: state.patient.gestational_weeks ? Number(state.patient.gestational_weeks) : null,
-      answers
-    };
-
-    // TODO: cambia la URL por tu endpoint real DRF
-    const res = await fetch("/api/form/submit/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      const txt = await res.text();
-      console.error(txt);
-      showToast("error", "Error", "No se pudo enviar. Revisa consola.");
-      return;
+      renderQuestions();
+      updateProgress();
+      validatePatientFields(true);
+      showToast("info", "Limpio", "Formulario reiniciado.");
     }
 
-    localStorage.removeItem("edi_draft");
-    showToast("success", "Enviado", "Evaluación enviada con éxito.");
-  } catch (e) {
-    console.error(e);
-    showToast("error", "Sin conexión", "Servidor no disponible.");
-  }
-}
+    async function submitEvaluation() {
+      try {
+        if (!validatePatientFields(false)) {
+          await updateProgress();
+          return;
+        }
 
-function showToast(type, title, message) {
-  const toast = document.getElementById('toast');
-  const icon = document.getElementById('toastIcon');
-  const tTitle = document.getElementById('toastTitle');
-  const tMsg = document.getElementById('toastMessage');
+        const questions = await loadQuestions(state.ageGroup);
+        const total = questions.length;
+        const answered = Object.keys(state.answers).length;
+        const pending = total - answered;
 
-  const styles = {
-    success: { border: 'border-green-500', icon: 'fa-check-circle text-green-500' },
-    error:   { border: 'border-red-500', icon: 'fa-times-circle text-red-500' },
-    info:    { border: 'border-blue-500', icon: 'fa-info-circle text-blue-500' },
-    warn:    { border: 'border-yellow-500', icon: 'fa-exclamation-triangle text-yellow-500' },
-  };
-  const s = styles[type] || styles.info;
+        if (pending > 0) {
+          showToast("warn", "Faltan respuestas", `Aún tienes ${pending} pregunta(s) sin responder.`);
+          await updateProgress();
+          return;
+        }
 
-  toast.className = `toast fixed top-6 right-6 bg-white rounded-lg shadow-2xl p-4 max-w-sm z-50 border-l-4 ${s.border}`;
-  icon.className = `fas ${s.icon} text-xl mt-1`;
-  tTitle.textContent = title || "";
-  tMsg.textContent = message || "";
+        const answers = questions.map(q => ({
+          question_code: q.id,
+          answer_type: q.type,
+          area: q.area || null,
+          is_critical: !!q.critical,
+          value: state.answers[q.id] === true
+        }));
 
-  toast.classList.remove('hidden');
-  setTimeout(() => closeToast(), 3000);
-}
+        const payload = {
+          full_name: state.patient.full_name.trim(),
+          document_id: (state.patient.document_id || "").trim() || null,
+          phone: state.patient.phone || null,
+          sex: state.patient.sex || null,
+          date_of_birth: state.patient.date_of_birth || null,
+          age_group: state.ageGroup,
+          is_premature: !!state.patient.is_premature,
+          gestational_weeks: state.patient.gestational_weeks ? Number(state.patient.gestational_weeks) : null,
+          answers
+        };
 
-function closeToast() {
-  document.getElementById('toast').classList.add('hidden');
-}
+        const res = await fetch("/api/form/submit/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          console.error(txt);
+          showToast("error", "Error", "No se pudo enviar. Revisa consola.");
+          return;
+        }
+
+        localStorage.removeItem("edi_draft");
+        showToast("success", "Enviado", "Evaluación enviada con éxito.");
+      } catch (e) {
+        console.error(e);
+        showToast("error", "Sin conexión", "Servidor no disponible.");
+      }
+    }
+
+    // =========================
+    //   TOAST
+    // =========================
+    function showToast(type, title, message) {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toastIcon');
+      const tTitle = document.getElementById('toastTitle');
+      const tMsg = document.getElementById('toastMessage');
+
+      const styles = {
+        success: { border: 'border-green-500', icon: 'fa-check-circle text-green-500' },
+        error:   { border: 'border-red-500', icon: 'fa-times-circle text-red-500' },
+        info:    { border: 'border-blue-500', icon: 'fa-info-circle text-blue-500' },
+        warn:    { border: 'border-yellow-500', icon: 'fa-exclamation-triangle text-yellow-500' },
+      };
+      const s = styles[type] || styles.info;
+
+      toast.className = `toast fixed top-6 right-6 bg-white rounded-lg shadow-2xl p-4 max-w-sm z-50 border-l-4 ${s.border}`;
+      icon.className = `fas ${s.icon} text-xl mt-1`;
+      tTitle.textContent = title || "";
+      tMsg.textContent = message || "";
+
+      toast.classList.remove('hidden');
+      setTimeout(() => closeToast(), 3500);
+    }
+
+    function closeToast() {
+      document.getElementById('toast').classList.add('hidden');
+    }
+
+    // Arranque
+    document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
 </html>

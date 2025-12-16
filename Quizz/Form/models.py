@@ -10,7 +10,11 @@ class Patient(models.Model):
         O = "O", "Otro/No especifica"
 
     full_name = models.CharField(max_length=150, verbose_name="Nombre completo")
-    document_id = models.CharField(max_length=30, blank=True, null=True, verbose_name="Cédula/ID")
+    document_id = models.CharField(
+        max_length=30,
+        unique=True,
+        verbose_name="Cédula / Historia clínica"
+    )
     sex = models.CharField(max_length=1, choices=Sex.choices, blank=True, null=True, verbose_name="Sexo")
     date_of_birth = models.DateField(verbose_name="Fecha de nacimiento")
     phone = models.CharField(max_length=30, blank=True, null=True, verbose_name="Teléfono")
@@ -184,7 +188,17 @@ class Evaluation(models.Model):
         null=True,
         verbose_name="Estado de señales de alarma"
     )
-    
+        # SEÑALES DE ALERTA (ALE)  
+    alert_signals_count = models.IntegerField(
+        default=0,
+        verbose_name="Cantidad de señales de alerta"
+    )
+    alert_signals_status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        null=True,
+        verbose_name="Estado de señales de alerta"
+    )
     # FACTORES DE RIESGO BIOLÓGICO (grupos 1-4)
     biological_risk_count = models.IntegerField(
         default=0,
@@ -243,6 +257,7 @@ class Answer(models.Model):
         AREA = "AREA", "Área de Desarrollo"
         NEUROLOGICAL = "NEURO", "Exploración Neurológica"
         ALARM = "ALARM", "Señal de Alarma"
+        ALERT = "ALERT", "Señal de Alerta"  
         BIOLOGICAL = "BIO", "Factor de Riesgo Biológico"
 
     evaluation = models.ForeignKey(
@@ -303,6 +318,7 @@ class EDIQuestion(models.Model):
         AREA = "AREA", "Área de Desarrollo"
         NEUROLOGICAL = "NEURO", "Exploración Neurológica"
         ALARM = "ALARM", "Señal de Alarma"
+        ALERT = "ALERT", "Señal de Alerta"  
         BIOLOGICAL = "BIO", "Factor de Riesgo Biológico"
     
     age_group = models.CharField(max_length=20, verbose_name="Grupo de edad")

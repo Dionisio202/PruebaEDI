@@ -16,7 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
+admin.site.site_header = "Sistema EDI – Panel Médico"
+admin.site.site_title = "EDI Admin"
+admin.site.index_title = "Administración Clínica"
 urlpatterns = [
     path('admin/', admin.site.urls),
         path("api/form/", include("Form.urls")),

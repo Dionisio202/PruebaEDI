@@ -2,58 +2,50 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required  # ✅ IMPORTANTE
+
 from .serializers import (
-    EvaluationCreateSerializer, 
+    EvaluationCreateSerializer,
     EvaluationDetailSerializer,
     PatientSerializer
 )
-from .models import Evaluation, Patient , EDIQuestion
+from .models import Evaluation, Patient, EDIQuestion
 from .services import get_area_status_display, get_diagnosis_display
+
+AREA_MAP = {
+    "Motriz Gruesa": "motriz_gruesa",
+    "Motriz Fina": "motriz_fina",
+    "Lenguaje": "lenguaje",
+    "Social": "social",
+    "Conocimiento": "conocimiento",
+}
+
+def normalize_area(raw):
+    if raw is None:
+        return None
+    raw = raw.strip()
+    return AREA_MAP.get(raw, raw)
 
 
 class SubmitEvaluation(APIView):
     """
     API para crear una nueva evaluación EDI.
-    
-    POST /api/submit/
-    Body: {
-        "full_name": "Juan Pérez",
-        "document_id": "1234567890",
-        "sex": "M",
-        "date_of_birth": "2024-06-15",
-        "phone": "0987654321",
-        "is_premature": false,
-        "gestational_weeks": null,
-        "age_group": "05-06",
-        "use_corrected_age": true,
-        "answers": [
-            {
-                "question_code": "05-06_MG_1",
-                "answer_type": "AREA",
-                "area": "motriz_gruesa",
-                "is_critical": true,
-                "value": true
-            },
-            ...
-        ],
-        "notes": "Evaluación realizada en consultorio"
-    }
     """
     authentication_classes = []
     permission_classes = []
 
     def post(self, request):
         serializer = EvaluationCreateSerializer(data=request.data)
-        
+
         if not serializer.is_valid():
             return Response({
                 "error": "Datos inválidos",
                 "details": serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         try:
             eval_obj = serializer.save()
-            
+
             return Response({
                 "success": True,
                 "message": "Evaluación creada exitosamente",
@@ -70,12 +62,18 @@ class SubmitEvaluation(APIView):
                     "social": eval_obj.social_status,
                     "conocimiento": eval_obj.conocimiento_status,
                     "neurological": eval_obj.neurological_status,
+                    "alarm_signals_status": eval_obj.alarm_signals_status,
+                    "alarm_signals_count": eval_obj.alarm_signals_count,
+                    "alert_signals_status": getattr(eval_obj, "alert_signals_status", None),
+                    "alert_signals_count": getattr(eval_obj, "alert_signals_count", 0),
+                    "biological_risk_status": eval_obj.biological_risk_status,
+                    "biological_risk_count": eval_obj.biological_risk_count,
                 },
                 "diagnosis": eval_obj.diagnosis,
                 "final_status": eval_obj.final_status,
                 "diagnosis_display": get_diagnosis_display(eval_obj.diagnosis),
             }, status=status.HTTP_201_CREATED)
-        
+
         except Exception as e:
             return Response({
                 "error": "Error al procesar la evaluación",
@@ -86,8 +84,6 @@ class SubmitEvaluation(APIView):
 class EvaluationDetail(APIView):
     """
     API para obtener detalles de una evaluación.
-    
-    GET /api/evaluation/<id>/
     """
     authentication_classes = []
     permission_classes = []
@@ -101,8 +97,6 @@ class EvaluationDetail(APIView):
 class PatientEvaluations(APIView):
     """
     API para listar todas las evaluaciones de un paciente.
-    
-    GET /api/patient/<id>/evaluations/
     """
     authentication_classes = []
     permission_classes = []
@@ -110,9 +104,9 @@ class PatientEvaluations(APIView):
     def get(self, request, patient_id):
         patient = get_object_or_404(Patient, id=patient_id)
         evaluations = patient.evaluations.all().order_by('-created_at')
-        
+
         serializer = EvaluationDetailSerializer(evaluations, many=True)
-        
+
         return Response({
             "patient": PatientSerializer(patient).data,
             "evaluations": serializer.data,
@@ -123,8 +117,6 @@ class PatientEvaluations(APIView):
 class PatientList(APIView):
     """
     API para listar todos los pacientes.
-    
-    GET /api/patients/
     """
     authentication_classes = []
     permission_classes = []
@@ -138,25 +130,27 @@ class PatientList(APIView):
         })
 
 
+# =========================
 # VISTAS DE TEMPLATES (HTML)
+# =========================
 
+@login_required(login_url="/admin/login/")
 def formulario_page(request):
     """
-    Página del formulario EDI.
-    
+    Página del formulario EDI (PROTEGIDA).
     GET /formulario/
     """
     return render(request, "Form/formulario.html")
 
 
+@login_required(login_url="/admin/login/")
 def resultado_page(request, evaluation_id):
     """
     Página de resultados de una evaluación.
-    
     GET /resultado/<id>/
     """
     evaluation = get_object_or_404(Evaluation, id=evaluation_id)
-    
+
     context = {
         'evaluation': evaluation,
         'patient': evaluation.patient,
@@ -169,27 +163,28 @@ def resultado_page(request, evaluation_id):
             'Conocimiento': get_area_status_display(evaluation.conocimiento_status),
         }
     }
-    
+
     return render(request, "Form/resultado.html", context)
 
 
+@login_required(login_url="/admin/login/")
 def paciente_historial_page(request, patient_id):
     """
     Página del historial de evaluaciones de un paciente.
-    
     GET /paciente/<id>/historial/
     """
     patient = get_object_or_404(Patient, id=patient_id)
     evaluations = patient.evaluations.all().order_by('-created_at')
-    
+
     context = {
         'patient': patient,
         'evaluations': evaluations,
         'current_age_months': patient.get_corrected_age_months() if patient.is_premature else patient.get_age_months(),
         'current_edi_group': patient.get_edi_age_group(),
     }
-    
+
     return render(request, "Form/paciente_historial.html", context)
+
 
 class EDIQuestionsByGroup(APIView):
     authentication_classes = []
@@ -204,9 +199,9 @@ class EDIQuestionsByGroup(APIView):
 
         data = [
             {
-                "id": q.code,          # 👈 tu frontend usa q.id como code
+                "id": q.code,
                 "text": q.text,
-                "area": q.area,
+                "area": normalize_area(q.area),
                 "critical": q.is_critical,
                 "type": q.question_type,
                 "age_group": q.age_group,
@@ -215,3 +210,30 @@ class EDIQuestionsByGroup(APIView):
             for q in qs
         ]
         return Response(data, status=status.HTTP_200_OK)
+
+
+class PatientByDocument(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        document_id = (request.query_params.get("document_id") or "").strip()
+
+        if not document_id:
+            return Response(
+                {"error": "document_id es requerido"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        patient = Patient.objects.filter(document_id=document_id).first()
+
+        if not patient:
+            return Response(
+                {"found": False, "patient": None},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response(
+            {"found": True, "patient": PatientSerializer(patient).data},
+            status=status.HTTP_200_OK
+        )

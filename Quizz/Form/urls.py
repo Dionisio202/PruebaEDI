@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    PatientByDocument,
     SubmitEvaluation,
     EvaluationDetail,
     PatientEvaluations,
@@ -19,9 +20,10 @@ urlpatterns = [
     path('patient/<int:patient_id>/evaluations/', PatientEvaluations.as_view(), name='patient_evaluations'),
     path('patients/', PatientList.as_view(), name='patient_list'),
     path('questions/', EDIQuestionsByGroup.as_view(), name='edi_questions'),
+    path('patient/by-document/', PatientByDocument.as_view(), name='patient_by_document'),
 
     # PÁGINAS HTML
-    path('formulario/', formulario_page, name='formulario'),
+    path('', formulario_page, name='formulario'),
     path('resultado/<int:evaluation_id>/', resultado_page, name='resultado'),
     path('paciente/<int:patient_id>/historial/', paciente_historial_page, name='paciente_historial'),
 ]
