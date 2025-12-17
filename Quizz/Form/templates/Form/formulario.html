@@ -47,13 +47,13 @@
             <i class="fas fa-child text-2xl"></i>
           </div>
           <div>
-           <h1 class="text-2xl font-bold">
-  <a href="/admin/"
-     class="inline-block hover:underline hover:text-white/90 transition"
-     title="Ir al panel administrativo">
-    Prueba EDI
-  </a>
-</h1>
+            <h1 class="text-2xl font-bold">
+              <a href="/admin/"
+                 class="inline-block hover:underline hover:text-white/90 transition"
+                 title="Ir al panel administrativo">
+                Prueba EDI
+              </a>
+            </h1>
 
             <p class="text-white/80 text-sm">Evaluación del Desarrollo Infantil</p>
           </div>
@@ -361,6 +361,15 @@
     };
 
     // =========================
+    //   FIX AUTOGUARDADO (NO BORRAR EN INIT)
+    // =========================
+    let RESTORING_DRAFT = false;
+
+    function deepClone(obj) {
+      return JSON.parse(JSON.stringify(obj || {}));
+    }
+
+    // =========================
     //   NUEVO: BÚSQUEDA PACIENTE POR DOCUMENTO (ENTER)
     // =========================
     async function fetchPatientByDocument(documentId) {
@@ -528,23 +537,32 @@
       const sel = document.getElementById("ageGroup");
       if (sel) sel.value = state.ageGroup;
 
+      // ⚠️ CLAVE: NO BORRAR RESPUESTAS DURANTE RESTAURACIÓN DEL BORRADOR
       if (state.ageGroup !== prev) {
-        state.answers = {};
+        if (!RESTORING_DRAFT) {
+          state.answers = {};
+        }
         await renderQuestions();
       }
 
       await updateProgress();
       validatePatientFields(true);
-      autosave();
+
+      // Evita sobre-escribir el borrador mientras lo estás restaurando
+      if (!RESTORING_DRAFT) autosave();
     }
 
     async function init() {
       loadDraft();
       setupEventListeners();
+
       await recalcGroupAndReloadIfNeeded();
       await renderQuestions();
       await updateProgress();
       validatePatientFields(true);
+
+      // listo: ya se restauró
+      RESTORING_DRAFT = false;
     }
 
     function setupEventListeners() {
@@ -552,6 +570,7 @@
         const fields = document.getElementById('prematureFields');
         fields.classList.toggle('hidden', !e.target.checked);
         state.patient.is_premature = e.target.checked;
+
         await recalcGroupAndReloadIfNeeded();
       });
 
@@ -581,7 +600,7 @@
 
           state.patient[key] = field.value;
 
-          // Si cambia DOB o semanas, recalcular grupo
+          // Si cambia DOB o semanas, recalcular grupo (y ahí sí puede limpiar si cambia)
           if (id === 'dob' || id === 'gestationalWeeks') {
             await recalcGroupAndReloadIfNeeded();
             return;
@@ -790,10 +809,16 @@
       if (!draft) return;
 
       try {
+        RESTORING_DRAFT = true;
+
         const saved = JSON.parse(draft);
 
-        if (saved.answers) state.answers = saved.answers;
-        if (saved.patient) state.patient = { ...state.patient, ...saved.patient };
+        // Restaurar TODO lo guardado (incluyendo ageGroup), sin borrar luego en init
+        if (saved && typeof saved === "object") {
+          if (saved.answers) state.answers = deepClone(saved.answers);
+          if (saved.patient) state.patient = { ...state.patient, ...deepClone(saved.patient) };
+          if (saved.ageGroup) state.ageGroup = saved.ageGroup || "";
+        }
 
         document.getElementById('childName').value = state.patient.full_name || "";
         document.getElementById('documentId').value = state.patient.document_id || "";
@@ -807,10 +832,13 @@
         const gw = document.getElementById('gestationalWeeks');
         if (gw) gw.value = state.patient.gestational_weeks || "";
 
+        // IMPORTANTÍSIMO: NO dejar el select en "" si ya hay grupo guardado
         const sel = document.getElementById('ageGroup');
-        if (sel) sel.value = "";
+        if (sel) sel.value = state.ageGroup || "";
+
       } catch (e) {
         console.error("Draft inválido:", e);
+        RESTORING_DRAFT = false;
       }
     }
 
