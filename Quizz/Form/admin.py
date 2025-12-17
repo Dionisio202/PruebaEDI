@@ -193,10 +193,10 @@ class EvaluationAdmin(admin.ModelAdmin):
         ("Factores de Riesgo Biológico", {
             "fields": ("biological_risk_count", "biological_risk_status")
         }),
-        ("Grupo Anterior", {
-            "fields": ("applied_previous_group", "previous_group_result"),
-            "classes": ("collapse",)
-        }),
+       # ("Grupo Anterior", {
+        #    "fields": ("applied_previous_group", "previous_group_result"),
+        #    "classes": ("collapse",)
+        #}),
         ("Diagnóstico Final", {
             "fields": ("diagnosis", "final_status"),
             "classes": ("wide",)
