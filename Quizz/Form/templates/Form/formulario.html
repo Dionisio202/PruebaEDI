@@ -37,6 +37,7 @@
     }
   </style>
 </head>
+
 <body class="bg-gray-50">
   <!-- Header -->
   <header class="gradient-bg text-white shadow-lg">
@@ -95,9 +96,9 @@
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  <i class="fas fa-id-card text-blue-500 mr-2"></i>Documento de identidad
+                  <i class="fas fa-id-card text-blue-500 mr-2"></i>Documento de identidad *
                 </label>
-                <input type="text" id="documentId"
+                <input type="text" id="documentId" required
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   placeholder="Cédula o historia clínica (Enter para buscar)">
                 <p class="text-xs text-gray-500 mt-1">Presione <b>Enter</b> para buscar al paciente.</p>
@@ -119,9 +120,9 @@
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  <i class="fas fa-calendar text-blue-500 mr-2"></i>Fecha de nacimiento
+                  <i class="fas fa-calendar text-blue-500 mr-2"></i>Fecha de nacimiento *
                 </label>
-                <input type="date" id="dob"
+                <input type="date" id="dob" required
                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
               </div>
 
@@ -148,7 +149,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   <i class="fas fa-hourglass-half text-orange-500 mr-2"></i>Semanas de gestación al nacer *
                 </label>
-                <input type="number" id="gestationalWeeks" min="20" max="36"
+                <input type="number" id="gestationalWeeks" min="20" max="42"
                   class="w-full md:w-1/2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition"
                   placeholder="Ej: 34">
               </div>
@@ -278,7 +279,7 @@
               <ul class="text-sm text-gray-700 space-y-2">
                 <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i><span>Complete los datos del paciente</span></li>
                 <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i><span>Responda todas las preguntas con Sí o No</span></li>
-                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i><span>Las preguntas con <span class="critical-badge text-red-600">⚠</span> son críticas</span></li>
+                <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i><span>Las preguntas con <span class="critical-badge text-red-600"></span> son críticas</span></li>
                 <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i><span>Sus respuestas se guardan automáticamente</span></li>
               </ul>
             </div>
@@ -309,26 +310,40 @@
     // =========================
     const QUESTION_CACHE = {}; // { "01": [..], ... }
 
+    // Tu API de preguntas devuelve:
+    // { id, code, text, area, critical, domain, age_band, display_order }
+    // Usamos:
+    // - key = String(id) para estado/UI
+    // - id = FK real para enviar respuestas
     function normalizeQuestions(raw) {
-      return (raw || []).map(q => ({
-        id: q.code ?? q.id,
-        text: q.text ?? q.question_text ?? "",
-        area: q.area ?? null,
-        type: q.question_type ?? q.type ?? null,  // "AREA" | "NEURO" | "ALARM" | "ALERT" | "BIO"
-        critical: q.is_critical ?? q.critical ?? false
-      })).filter(q => !!q.id && !!q.text);
+      return (raw || []).map(q => {
+        const id = (q.id !== undefined && q.id !== null) ? Number(q.id) : null;
+        const key = (id !== null && Number.isFinite(id)) ? String(id) : String(q.code ?? "");
+
+        return {
+          id,                                // int (FK)
+          key,                               // string estable
+          code: q.code ?? null,
+          text: q.text ?? "",
+          area: q.area ?? null,
+          type: (q.domain ?? "").toString().toUpperCase(), // AREA|NEURO|ALARM|ALERT|BIO
+          critical: q.critical ?? q.is_critical ?? false,
+          display_order: q.display_order ?? 0
+        };
+      }).filter(q => !!q.key && !!q.text);
     }
 
-    async function loadQuestions(ageGroup) {
-      if (!ageGroup) return [];
-      if (QUESTION_CACHE[ageGroup]) return QUESTION_CACHE[ageGroup];
+    async function loadQuestions(ageBand) {
+      if (!ageBand) return [];
+      if (QUESTION_CACHE[ageBand]) return QUESTION_CACHE[ageBand];
 
-      const res = await fetch(`/api/form/questions/?age_group=${encodeURIComponent(ageGroup)}`);
+      const res = await fetch(`/api/form/questions/?age_band=${encodeURIComponent(ageBand)}`);
       if (!res.ok) throw new Error("No se pudieron cargar preguntas");
       const raw = await res.json();
 
-      QUESTION_CACHE[ageGroup] = normalizeQuestions(raw);
-      return QUESTION_CACHE[ageGroup];
+      const normalized = normalizeQuestions(raw).sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+      QUESTION_CACHE[ageBand] = normalized;
+      return normalized;
     }
 
     // =========================
@@ -347,8 +362,8 @@
     };
 
     const state = {
-      ageGroup: "",
-      answers: {}, // { [questionCode]: true|false }
+      ageBand: "", // ✅ ahora es AgeBand (antes ageGroup)
+      answers: {}, // { [questionKey]: true|false }
       patient: {
         full_name: "",
         document_id: "",
@@ -370,7 +385,7 @@
     }
 
     // =========================
-    //   NUEVO: BÚSQUEDA PACIENTE POR DOCUMENTO (ENTER)
+    //   BÚSQUEDA PACIENTE POR DOCUMENTO (ENTER)
     // =========================
     async function fetchPatientByDocument(documentId) {
       const url = `/api/form/patient/by-document/?document_id=${encodeURIComponent(documentId)}`;
@@ -381,9 +396,6 @@
 
       const data = await res.json();
 
-      // Soporta dos formatos:
-      // 1) {found:true, patient:{...}}
-      // 2) {...paciente...} directo
       if (data && typeof data === "object" && "found" in data) {
         return { found: !!data.found, patient: data.patient ?? null };
       }
@@ -397,7 +409,6 @@
     }
 
     async function applyPatientToForm(patient) {
-      // Actualiza state
       state.patient.full_name = patient.full_name ?? "";
       state.patient.document_id = patient.document_id ?? "";
       state.patient.sex = patient.sex ?? "";
@@ -406,22 +417,19 @@
       state.patient.is_premature = !!patient.is_premature;
       state.patient.gestational_weeks = patient.gestational_weeks ?? null;
 
-      // Rellena inputs
       setInputValue("childName", state.patient.full_name);
       setInputValue("documentId", state.patient.document_id);
       setInputValue("sex", state.patient.sex);
       setInputValue("dob", state.patient.date_of_birth);
       setInputValue("phone", state.patient.phone);
 
-      // Prematuro UI
       const prem = document.getElementById("isPremature");
       const fields = document.getElementById("prematureFields");
       if (prem) prem.checked = state.patient.is_premature;
       if (fields) fields.classList.toggle("hidden", !state.patient.is_premature);
       setInputValue("gestationalWeeks", state.patient.gestational_weeks ?? "");
 
-      // Recalcular grupo + preguntas/progreso
-      await recalcGroupAndReloadIfNeeded();
+      await recalcBandAndReloadIfNeeded();
       await renderQuestions();
       await updateProgress();
       validatePatientFields(true);
@@ -452,7 +460,7 @@
     }
 
     // =========================
-    //   CÁLCULO AUTOMÁTICO DE GRUPO
+    //   CÁLCULO AUTOMÁTICO DE GRUPO (AgeBand)
     // =========================
     function parseISODate(value) {
       if (!value) return null;
@@ -507,7 +515,8 @@
       return diffMonths(correctedDob, today);
     }
 
-    function getAgeGroupFromMonths(months) {
+    // Tus AgeBand codes: "01", "02", ..., "05-06", ...
+    function getAgeBandFromMonths(months) {
       if (months === null) return "";
 
       if (months <= 1) return "01";
@@ -527,28 +536,24 @@
       return "60-71";
     }
 
-    async function recalcGroupAndReloadIfNeeded() {
-      const prev = state.ageGroup;
+    async function recalcBandAndReloadIfNeeded() {
+      const prev = state.ageBand;
 
       const months = computeCorrectedMonths();
-      const group = getAgeGroupFromMonths(months);
+      const band = getAgeBandFromMonths(months);
 
-      state.ageGroup = group || "";
+      state.ageBand = band || "";
       const sel = document.getElementById("ageGroup");
-      if (sel) sel.value = state.ageGroup;
+      if (sel) sel.value = state.ageBand;
 
-      // ⚠️ CLAVE: NO BORRAR RESPUESTAS DURANTE RESTAURACIÓN DEL BORRADOR
-      if (state.ageGroup !== prev) {
-        if (!RESTORING_DRAFT) {
-          state.answers = {};
-        }
+      if (state.ageBand !== prev) {
+        if (!RESTORING_DRAFT) state.answers = {};
         await renderQuestions();
       }
 
       await updateProgress();
       validatePatientFields(true);
 
-      // Evita sobre-escribir el borrador mientras lo estás restaurando
       if (!RESTORING_DRAFT) autosave();
     }
 
@@ -556,12 +561,11 @@
       loadDraft();
       setupEventListeners();
 
-      await recalcGroupAndReloadIfNeeded();
+      await recalcBandAndReloadIfNeeded();
       await renderQuestions();
       await updateProgress();
       validatePatientFields(true);
 
-      // listo: ya se restauró
       RESTORING_DRAFT = false;
     }
 
@@ -571,10 +575,9 @@
         fields.classList.toggle('hidden', !e.target.checked);
         state.patient.is_premature = e.target.checked;
 
-        await recalcGroupAndReloadIfNeeded();
+        await recalcBandAndReloadIfNeeded();
       });
 
-      // NUEVO: Enter en documento -> busca paciente
       const doc = document.getElementById("documentId");
       if (doc) {
         doc.addEventListener("keydown", async (e) => {
@@ -600,9 +603,8 @@
 
           state.patient[key] = field.value;
 
-          // Si cambia DOB o semanas, recalcular grupo (y ahí sí puede limpiar si cambia)
           if (id === 'dob' || id === 'gestationalWeeks') {
-            await recalcGroupAndReloadIfNeeded();
+            await recalcBandAndReloadIfNeeded();
             return;
           }
 
@@ -617,17 +619,30 @@
     }
 
     // =========================
-    //   RENDER PREGUNTAS (SIN NULL)
+    //   RENDER PREGUNTAS
     // =========================
     async function renderQuestions() {
       const container = document.getElementById('questionsContainer');
-      const questions = await loadQuestions(state.ageGroup);
 
-      if (!state.ageGroup) {
+      if (!state.ageBand) {
         container.innerHTML = `
           <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 text-center">
             <i class="fas fa-info-circle text-yellow-500 text-4xl mb-3"></i>
             <p class="text-gray-700">Ingrese la fecha de nacimiento para cargar el grupo y las preguntas</p>
+          </div>
+        `;
+        return;
+      }
+
+      let questions = [];
+      try {
+        questions = await loadQuestions(state.ageBand);
+      } catch (e) {
+        console.error(e);
+        container.innerHTML = `
+          <div class="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+            <i class="fas fa-triangle-exclamation text-red-500 text-4xl mb-3"></i>
+            <p class="text-gray-700">Error cargando preguntas. Revisa consola y el endpoint /api/form/questions/</p>
           </div>
         `;
         return;
@@ -676,8 +691,8 @@
         `;
 
         qs.forEach(q => {
-          const answered = Object.prototype.hasOwnProperty.call(state.answers, q.id);
-          const value = state.answers[q.id];
+          const answered = Object.prototype.hasOwnProperty.call(state.answers, q.key);
+          const value = state.answers[q.key];
 
           html += `
             <div class="question-card border border-gray-200 rounded-xl p-4 ${answered ? 'bg-gray-50' : ''}">
@@ -690,11 +705,11 @@
                 </div>
               </div>
               <div class="flex space-x-3 ml-6">
-                <button onclick="setAnswer('${q.id}', true)"
+                <button onclick="setAnswer('${q.key}', true)"
                   class="btn-yes flex-1 py-3 rounded-lg font-semibold text-white bg-gray-300 hover:bg-green-500 ${value === true ? 'active' : ''}">
                   <i class="fas fa-check mr-2"></i>Sí
                 </button>
-                <button onclick="setAnswer('${q.id}', false)"
+                <button onclick="setAnswer('${q.key}', false)"
                   class="btn-no flex-1 py-3 rounded-lg font-semibold text-white bg-gray-300 hover:bg-red-500 ${value === false ? 'active' : ''}">
                   <i class="fas fa-times mr-2"></i>No
                 </button>
@@ -709,8 +724,8 @@
       container.innerHTML = html;
     }
 
-    window.setAnswer = async function(questionId, value) {
-      state.answers[questionId] = value;
+    window.setAnswer = async function(questionKey, value) {
+      state.answers[String(questionKey)] = value;
       await renderQuestions();
       await updateProgress();
       autosave();
@@ -720,9 +735,22 @@
     //   PROGRESO + BOTÓN
     // =========================
     async function updateProgress() {
-      const questions = await loadQuestions(state.ageGroup);
+      if (!state.ageBand) {
+        document.getElementById('answeredCount').textContent = 0;
+        document.getElementById('totalCount').textContent = 0;
+        document.getElementById('pendingCount').textContent = 0;
+        document.getElementById('progressPercent').textContent = `0%`;
+        document.getElementById('progressCircle').setAttribute('stroke-dasharray', `0, 100`);
+        document.getElementById('btnSubmit').disabled = true;
+        return;
+      }
+
+      const questions = await loadQuestions(state.ageBand);
       const total = questions.length;
-      const answered = Object.keys(state.answers).length;
+
+      const validKeys = new Set(questions.map(q => q.key));
+      const answered = Object.keys(state.answers).filter(k => validKeys.has(k)).length;
+
       const pending = total - answered;
       const percent = total > 0 ? Math.round((answered / total) * 100) : 0;
 
@@ -733,7 +761,7 @@
       document.getElementById('progressCircle').setAttribute('stroke-dasharray', `${percent}, 100`);
 
       const missing = getMissingPatientFields();
-      const canSubmit = state.ageGroup && missing.length === 0 && pending === 0;
+      const canSubmit = state.ageBand && missing.length === 0 && pending === 0;
       document.getElementById('btnSubmit').disabled = !canSubmit;
     }
 
@@ -743,47 +771,34 @@
     function getMissingPatientFields() {
       const missing = [];
 
-      if (!state.patient.full_name || !state.patient.full_name.trim()) {
-        missing.push("Nombre completo");
-      }
-
-      if (!state.patient.date_of_birth) {
-        missing.push("Fecha de nacimiento");
-      }
-
-      if (!state.ageGroup) {
-        missing.push("Grupo EDI (no se pudo calcular)");
-      }
+      if (!state.patient.full_name || !state.patient.full_name.trim()) missing.push("Nombre completo");
+      if (!state.patient.document_id || !state.patient.document_id.trim()) missing.push("Documento de identidad");
+      if (!state.patient.date_of_birth) missing.push("Fecha de nacimiento");
+      if (!state.ageBand) missing.push("Grupo EDI (no se pudo calcular)");
 
       if (state.patient.is_premature) {
         const gw = state.patient.gestational_weeks;
-        if (gw === null || gw === "" || Number.isNaN(Number(gw))) {
-          missing.push("Semanas de gestación");
-        }
+        if (gw === null || gw === "" || Number.isNaN(Number(gw))) missing.push("Semanas de gestación");
       }
 
       return missing;
     }
 
     function validatePatientFields(silent = false) {
-      ['childName','dob','gestationalWeeks'].forEach(id => {
+      ['childName','documentId','dob','gestationalWeeks'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('field-error');
       });
 
       const missing = getMissingPatientFields();
 
-      if ((!state.patient.full_name || !state.patient.full_name.trim())) {
-        document.getElementById('childName')?.classList.add('field-error');
-      }
-      if (!state.patient.date_of_birth) {
-        document.getElementById('dob')?.classList.add('field-error');
-      }
+      if (!state.patient.full_name || !state.patient.full_name.trim()) document.getElementById('childName')?.classList.add('field-error');
+      if (!state.patient.document_id || !state.patient.document_id.trim()) document.getElementById('documentId')?.classList.add('field-error');
+      if (!state.patient.date_of_birth) document.getElementById('dob')?.classList.add('field-error');
+
       if (state.patient.is_premature) {
         const gw = state.patient.gestational_weeks;
-        if (gw === null || gw === "" || Number.isNaN(Number(gw))) {
-          document.getElementById('gestationalWeeks')?.classList.add('field-error');
-        }
+        if (gw === null || gw === "" || Number.isNaN(Number(gw))) document.getElementById('gestationalWeeks')?.classList.add('field-error');
       }
 
       if (!silent && missing.length > 0) {
@@ -810,14 +825,14 @@
 
       try {
         RESTORING_DRAFT = true;
-
         const saved = JSON.parse(draft);
 
-        // Restaurar TODO lo guardado (incluyendo ageGroup), sin borrar luego en init
         if (saved && typeof saved === "object") {
           if (saved.answers) state.answers = deepClone(saved.answers);
           if (saved.patient) state.patient = { ...state.patient, ...deepClone(saved.patient) };
-          if (saved.ageGroup) state.ageGroup = saved.ageGroup || "";
+          if (saved.ageBand) state.ageBand = saved.ageBand || "";
+          // compat: por si guardaste antes "ageGroup"
+          if (!state.ageBand && saved.ageGroup) state.ageBand = saved.ageGroup || "";
         }
 
         document.getElementById('childName').value = state.patient.full_name || "";
@@ -832,9 +847,8 @@
         const gw = document.getElementById('gestationalWeeks');
         if (gw) gw.value = state.patient.gestational_weeks || "";
 
-        // IMPORTANTÍSIMO: NO dejar el select en "" si ya hay grupo guardado
         const sel = document.getElementById('ageGroup');
-        if (sel) sel.value = state.ageGroup || "";
+        if (sel) sel.value = state.ageBand || "";
 
       } catch (e) {
         console.error("Draft inválido:", e);
@@ -850,7 +864,7 @@
 
       localStorage.removeItem('edi_draft');
 
-      state.ageGroup = "";
+      state.ageBand = "";
       state.answers = {};
       state.patient = {
         full_name: "",
@@ -887,10 +901,11 @@
           return;
         }
 
-        const questions = await loadQuestions(state.ageGroup);
-        const total = questions.length;
-        const answered = Object.keys(state.answers).length;
-        const pending = total - answered;
+        const questions = await loadQuestions(state.ageBand);
+
+        const validKeys = new Set(questions.map(q => q.key));
+        const answered = Object.keys(state.answers).filter(k => validKeys.has(k)).length;
+        const pending = questions.length - answered;
 
         if (pending > 0) {
           showToast("warn", "Faltan respuestas", `Aún tienes ${pending} pregunta(s) sin responder.`);
@@ -898,23 +913,23 @@
           return;
         }
 
+        // ✅ IMPORTANTE: TU BACKEND AHORA ES FK (question_id), NO question_code
         const answers = questions.map(q => ({
-          question_code: q.id,
-          answer_type: q.type,
-          area: q.area || null,
-          is_critical: !!q.critical,
-          value: state.answers[q.id] === true
+          question_id: q.id,
+          value: state.answers[q.key] === true
         }));
 
         const payload = {
           full_name: state.patient.full_name.trim(),
-          document_id: (state.patient.document_id || "").trim() || null,
-          phone: state.patient.phone || null,
+          document_id: (state.patient.document_id || "").trim(), // NO null
+          phone: (state.patient.phone || "").trim() || null,
           sex: state.patient.sex || null,
           date_of_birth: state.patient.date_of_birth || null,
-          age_group: state.ageGroup,
+
+          age_group: state.ageBand,   
           is_premature: !!state.patient.is_premature,
           gestational_weeks: state.patient.gestational_weeks ? Number(state.patient.gestational_weeks) : null,
+
           answers
         };
 
@@ -927,7 +942,7 @@
         if (!res.ok) {
           const txt = await res.text();
           console.error(txt);
-          showToast("error", "Error", "No se pudo enviar. Revisa consola.");
+          showToast("error", "Error", "No se pudo enviar. Revisa consola (respuesta del backend).");
           return;
         }
 

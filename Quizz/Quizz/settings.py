@@ -76,11 +76,22 @@ WSGI_APPLICATION = 'Quizz.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "mssql",
+        "NAME": "EDI",
+        "USER": "sa",
+        "PASSWORD": "edison202",
+        "HOST": "localhost",
+        "PORT": "1466",
+        "OPTIONS": {
+            "driver": "ODBC Driver 17 for SQL Server",
+            "TrustServerCertificate": "yes",
+        },
     }
 }
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
 
 
 # Password validation
@@ -105,7 +116,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 
 TIME_ZONE = 'UTC'
 

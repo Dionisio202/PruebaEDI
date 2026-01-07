@@ -1,11 +1,78 @@
-# edi_seed.py
-# Comando para ejecutar: python manage.py shell < edi_seed.py
+# seed_questions.py
+# Ejecutar: python manage.py shell < seed_questions.py
 
-from Form.models import EDIQuestion
+from django.db import transaction
+from Form.models import Instrument, InstrumentVersion, AgeBand, Question
 
-def create_edi_questions():
-    """Carga todas las preguntas EDI en la base de datos"""
-    
+RESET = False
+INSTRUMENT_CODE = "EDI"
+INSTRUMENT_NAME = "EDI"
+VERSION = "2024-02-12"
+
+AGEBANDS = [
+    ("01", 1, 1),
+    ("02", 2, 2),
+    ("03", 3, 3),
+    ("04", 4, 4),
+    ("05-06", 5, 6),
+    ("07-09", 7, 9),
+    ("10-12", 10, 12),
+    ("13-15", 13, 15),
+    ("16-18", 16, 18),
+    ("19-24", 19, 24),
+    ("25-30", 25, 30),
+    ("31-36", 31, 36),
+    ("37-48", 37, 48),
+    ("49-59", 49, 59),
+    ("60-71", 60, 71),
+]
+
+def _fix_orders_if_needed(questions):
+    by_group = {}
+    for q in questions:
+        by_group.setdefault(q["age_group"], []).append(q)
+
+    for age_group, items in by_group.items():
+        orders = [i.get("order") for i in items]
+        has_none = any(o is None for o in orders)
+        has_dupes = len(set(orders)) != len(orders)
+        try:
+            sorted_orders = sorted(orders)
+            is_consecutive = sorted_orders == list(range(1, len(items) + 1))
+        except TypeError:
+            is_consecutive = False
+
+        if has_none or has_dupes or not is_consecutive:
+            for idx, q in enumerate(items, start=1):
+                q["order"] = idx
+
+@transaction.atomic
+def run():
+    instrument, _ = Instrument.objects.update_or_create(
+        code=INSTRUMENT_CODE,
+        defaults={"name": INSTRUMENT_NAME},
+    )
+
+    version, _ = InstrumentVersion.objects.update_or_create(
+        instrument=instrument,
+        version=VERSION,
+        defaults={"is_active": True},
+    )
+
+    # AgeBands
+    ageband_by_code = {}
+    for code, min_m, max_m in AGEBANDS:
+        ab, _ = AgeBand.objects.update_or_create(
+            instrument_version=version,
+            code=code,
+            defaults={"min_months": min_m, "max_months": max_m},
+        )
+        ageband_by_code[code] = ab
+
+    if RESET:
+        Question.objects.filter(instrument_version=version).delete()
+
+    # === TU questions_data (el que ya pegaste) ===
     questions_data = [
         # ==================== GRUPO 01 (1 mes - 1m29d) ====================
         # Motriz Gruesa
@@ -1211,24 +1278,48 @@ def create_edi_questions():
          "text": "¿El niño se orina en la cama por las noches?",
          "is_critical": False, "order": 24},
     ]
-    
-    # Eliminar preguntas existentes (opcional, comentar si no se desea)
-    print("Eliminando preguntas existentes...")
-    EDIQuestion.objects.all().delete()
-    
-    # Crear las preguntas
-    print("Creando preguntas EDI...")
-    created_count = 0
-    for q_data in questions_data:
-        try:
-            EDIQuestion.objects.create(**q_data)
-            created_count += 1
-        except Exception as e:
-            print(f"Error creando pregunta {q_data['code']}: {e}")
-    
-    print(f"\n✅ Se crearon {created_count} preguntas EDI exitosamente")
-    print(f"Total de grupos de edad: 15")
-    print("Grupos: 01, 02, 03, 04, 05-06, 07-09, 10-12, 13-15, 16-18, 19-24, 25-30, 31-36, 37-48, 49-59, 60-71")
+    # (Opcional pero recomendado) Corrige order por grupo
+    _fix_orders_if_needed(questions_data)
 
-# Ejecutar la función
-create_edi_questions()
+    created, updated, errors = 0, 0, 0
+
+    for q in questions_data:
+        code = q["code"]
+        age_group = q["age_group"]
+
+        # OJO: aquí debes decidir ALERT vs ALARM correctamente
+        domain = q["question_type"]  # idealmente ya vendría ALERT/ALARM bien
+        area = q.get("area")
+
+        defaults = {
+            "instrument_version": version,
+            "age_band": ageband_by_code[age_group],
+            "domain": domain,
+            "area": area,
+            "text": q["text"],
+            "is_critical": q.get("is_critical", False),
+            "display_order": q.get("order") or 0,
+        }
+
+        try:
+            obj, was_created = Question.objects.update_or_create(
+                instrument_version=version,
+                code=code,
+                defaults=defaults,
+            )
+            # Si quieres forzar validación:
+            # obj.full_clean()
+            # obj.save()
+
+            created += 1 if was_created else 0
+            updated += 0 if was_created else 1
+        except Exception as e:
+            errors += 1
+            print(f"❌ {code}: {e}")
+
+    print("✅ Seed listo")
+    print("Creadas:", created)
+    print("Actualizadas:", updated)
+    print("Errores:", errors)
+
+run()

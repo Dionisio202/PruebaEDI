@@ -2,15 +2,27 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required  # ✅ IMPORTANTE
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
 from .serializers import (
     EvaluationCreateSerializer,
     EvaluationDetailSerializer,
     PatientSerializer
 )
-from .models import Evaluation, Patient, EDIQuestion
+from .models import (
+    Patient,
+    Evaluation,
+    Instrument,
+    InstrumentVersion,
+    AgeBand,
+    Question,
+    EvaluationAreaResult,
+    EvaluationDomainResult,
+    EvaluationSummary,
+)
 from .services import get_area_status_display, get_diagnosis_display
+
 
 AREA_MAP = {
     "Motriz Gruesa": "motriz_gruesa",
@@ -20,12 +32,17 @@ AREA_MAP = {
     "Conocimiento": "conocimiento",
 }
 
+
 def normalize_area(raw):
     if raw is None:
         return None
     raw = raw.strip()
     return AREA_MAP.get(raw, raw)
 
+
+# =========================
+# API
+# =========================
 
 class SubmitEvaluation(APIView):
     """
@@ -46,32 +63,46 @@ class SubmitEvaluation(APIView):
         try:
             eval_obj = serializer.save()
 
+            # Tomamos el resumen normalizado (si existe)
+            summary = getattr(eval_obj, "summary", None)
+
+            # Resultados por área normalizados
+            area_results = {
+                r.area: {
+                    "yes_count": r.yes_count,
+                    "total_count": r.total_count,
+                    "status": r.status,
+                }
+                for r in eval_obj.area_results.all()
+            }
+
+            # Resultados por dominio normalizados
+            domain_results = {
+                r.domain: {
+                    "count": r.count,
+                    "red_flags": r.red_flags,
+                    "status": r.status,
+                }
+                for r in eval_obj.domain_results.all()
+            }
+
             return Response({
                 "success": True,
                 "message": "Evaluación creada exitosamente",
                 "evaluation_id": eval_obj.id,
                 "patient_id": eval_obj.patient.id,
                 "patient_name": eval_obj.patient.full_name,
-                "age_group": eval_obj.age_group,
+                "instrument_version": str(eval_obj.instrument_version),
+                "age_band": eval_obj.age_band.code if eval_obj.age_band_id else None,
                 "age_in_months": eval_obj.age_in_months,
                 "used_corrected_age": eval_obj.used_corrected_age,
                 "results": {
-                    "motriz_gruesa": eval_obj.motriz_gruesa_status,
-                    "motriz_fina": eval_obj.motriz_fina_status,
-                    "lenguaje": eval_obj.lenguaje_status,
-                    "social": eval_obj.social_status,
-                    "conocimiento": eval_obj.conocimiento_status,
-                    "neurological": eval_obj.neurological_status,
-                    "alarm_signals_status": eval_obj.alarm_signals_status,
-                    "alarm_signals_count": eval_obj.alarm_signals_count,
-                    "alert_signals_status": getattr(eval_obj, "alert_signals_status", None),
-                    "alert_signals_count": getattr(eval_obj, "alert_signals_count", 0),
-                    "biological_risk_status": eval_obj.biological_risk_status,
-                    "biological_risk_count": eval_obj.biological_risk_count,
+                    "areas": area_results,
+                    "domains": domain_results,
                 },
-                "diagnosis": eval_obj.diagnosis,
-                "final_status": eval_obj.final_status,
-                "diagnosis_display": get_diagnosis_display(eval_obj.diagnosis),
+                "diagnosis": getattr(summary, "diagnosis", None),
+                "final_status": getattr(summary, "final_status", None),
+                "diagnosis_display": get_diagnosis_display(getattr(summary, "diagnosis", None)),
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
@@ -130,88 +161,6 @@ class PatientList(APIView):
         })
 
 
-# =========================
-# VISTAS DE TEMPLATES (HTML)
-# =========================
-
-@login_required(login_url="/admin/login/")
-def formulario_page(request):
-    """
-    Página del formulario EDI (PROTEGIDA).
-    GET /formulario/
-    """
-    return render(request, "Form/formulario.html")
-
-
-@login_required(login_url="/admin/login/")
-def resultado_page(request, evaluation_id):
-    """
-    Página de resultados de una evaluación.
-    GET /resultado/<id>/
-    """
-    evaluation = get_object_or_404(Evaluation, id=evaluation_id)
-
-    context = {
-        'evaluation': evaluation,
-        'patient': evaluation.patient,
-        'diagnosis_display': get_diagnosis_display(evaluation.diagnosis),
-        'areas': {
-            'Motriz Gruesa': get_area_status_display(evaluation.motriz_gruesa_status),
-            'Motriz Fina': get_area_status_display(evaluation.motriz_fina_status),
-            'Lenguaje': get_area_status_display(evaluation.lenguaje_status),
-            'Social': get_area_status_display(evaluation.social_status),
-            'Conocimiento': get_area_status_display(evaluation.conocimiento_status),
-        }
-    }
-
-    return render(request, "Form/resultado.html", context)
-
-
-@login_required(login_url="/admin/login/")
-def paciente_historial_page(request, patient_id):
-    """
-    Página del historial de evaluaciones de un paciente.
-    GET /paciente/<id>/historial/
-    """
-    patient = get_object_or_404(Patient, id=patient_id)
-    evaluations = patient.evaluations.all().order_by('-created_at')
-
-    context = {
-        'patient': patient,
-        'evaluations': evaluations,
-        'current_age_months': patient.get_corrected_age_months() if patient.is_premature else patient.get_age_months(),
-        'current_edi_group': patient.get_edi_age_group(),
-    }
-
-    return render(request, "Form/paciente_historial.html", context)
-
-
-class EDIQuestionsByGroup(APIView):
-    authentication_classes = []
-    permission_classes = []
-
-    def get(self, request):
-        age_group = request.query_params.get("age_group")
-        if not age_group:
-            return Response({"error": "age_group es requerido"}, status=status.HTTP_400_BAD_REQUEST)
-
-        qs = EDIQuestion.objects.filter(age_group=age_group).order_by("order", "id")
-
-        data = [
-            {
-                "id": q.code,
-                "text": q.text,
-                "area": normalize_area(q.area),
-                "critical": q.is_critical,
-                "type": q.question_type,
-                "age_group": q.age_group,
-                "order": q.order,
-            }
-            for q in qs
-        ]
-        return Response(data, status=status.HTTP_200_OK)
-
-
 class PatientByDocument(APIView):
     authentication_classes = []
     permission_classes = []
@@ -237,3 +186,132 @@ class PatientByDocument(APIView):
             {"found": True, "patient": PatientSerializer(patient).data},
             status=status.HTTP_200_OK
         )
+
+
+class EDIQuestionsByGroup(APIView):
+    """
+    Reemplaza EDIQuestionsByGroup usando AgeBand + Question.
+    Acepta:
+      - instrument_code (default: EDI)
+      - version (opcional; si no, usa la activa)
+      - age_band (requerido; antes era age_group)
+    """
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        instrument_code = (request.query_params.get("instrument_code") or "EDI").strip()
+        version = (request.query_params.get("version") or "").strip()
+        age_band_code = (request.query_params.get("age_band") or "").strip()
+
+        if not age_band_code:
+            return Response({"error": "age_band es requerido"}, status=status.HTTP_400_BAD_REQUEST)
+
+        instrument = Instrument.objects.filter(code=instrument_code).first()
+        if not instrument:
+            return Response({"error": f"Instrumento '{instrument_code}' no existe"}, status=status.HTTP_404_NOT_FOUND)
+
+        if version:
+            iv = InstrumentVersion.objects.filter(instrument=instrument, version=version).first()
+        else:
+            iv = (
+                InstrumentVersion.objects
+                .filter(instrument=instrument, is_active=True)
+                .order_by("-effective_from", "-id")
+                .first()
+            )
+
+        if not iv:
+            return Response({"error": "No se encontró una versión del instrumento"}, status=status.HTTP_404_NOT_FOUND)
+
+        band = AgeBand.objects.filter(instrument_version=iv, code=age_band_code).first()
+        if not band:
+            return Response({"error": f"AgeBand '{age_band_code}' no existe para esa versión"}, status=status.HTTP_404_NOT_FOUND)
+
+        qs = (
+            Question.objects
+            .filter(instrument_version=iv, age_band=band)
+            .order_by("display_order", "id")
+        )
+
+        data = [
+            {
+                "id": q.id,                 # ahora la respuesta se relaciona por FK, no por code string
+                "code": q.code,
+                "text": q.text,
+                "area": q.area,
+                "critical": q.is_critical,
+                "domain": q.domain,
+                "age_band": band.code,
+                "display_order": q.display_order,
+            }
+            for q in qs
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+
+# =========================
+# VISTAS DE TEMPLATES (HTML)
+# =========================
+
+@login_required(login_url="/admin/login/")
+def formulario_page(request):
+    """
+    Página del formulario EDI (PROTEGIDA).
+    GET /formulario/
+    """
+    return render(request, "Form/formulario.html")
+
+
+@login_required(login_url="/admin/login/")
+def resultado_page(request, evaluation_id):
+    """
+    Página de resultados de una evaluación.
+    GET /resultado/<id>/
+    """
+    evaluation = get_object_or_404(Evaluation, id=evaluation_id)
+    summary = getattr(evaluation, "summary", None)
+
+    # Construir áreas desde tabla normalizada
+    areas = {}
+    for r in evaluation.area_results.all():
+        # r.area ya viene normalizado tipo "motriz_gruesa"
+        # En UI puedes mapear a nombre bonito si quieres, aquí te lo dejo como está.
+        areas[r.area] = get_area_status_display(r.status)
+
+    context = {
+        "evaluation": evaluation,
+        "patient": evaluation.patient,
+        "diagnosis_display": get_diagnosis_display(getattr(summary, "diagnosis", None)),
+        "final_status": getattr(summary, "final_status", None),
+        "areas": areas,
+        "domain_results": evaluation.domain_results.all(),
+        "summary": summary,
+    }
+
+    return render(request, "Form/resultado.html", context)
+
+
+@login_required(login_url="/admin/login/")
+def paciente_historial_page(request, patient_id):
+    """
+    Página del historial de evaluaciones de un paciente.
+    GET /paciente/<id>/historial/
+    """
+    patient = get_object_or_404(Patient, id=patient_id)
+    evaluations = (
+        patient.evaluations
+        .select_related("instrument_version", "age_band")
+        .select_related("summary")
+        .order_by("-created_at")
+    )
+
+    # Nota: tu nuevo Patient ya no tiene get_age_months/get_corrected_age_months/get_edi_age_group
+    # porque el esquema ahora lo calcula el backend/serializer (o lo puedes reponer si quieres).
+    # Aquí ponemos valores seguros.
+    context = {
+        "patient": patient,
+        "evaluations": evaluations,
+    }
+
+    return render(request, "Form/paciente_historial.html", context)
